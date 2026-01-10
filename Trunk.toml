@@ -1,0 +1,7 @@
+[[hooks]]
+stage = "pre_build"
+command = "stylance"
+command_arguments = [".", "--output-dir", "./styles/"]
+
+[watch]
+ignore = ["styles/"]
