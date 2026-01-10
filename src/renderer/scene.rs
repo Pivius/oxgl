@@ -1,24 +1,24 @@
 use super::mesh::Mesh;
-use glam::{Vec3, Mat4};
+use glam::{Vec3, Mat4, Quat};
 
 #[derive(Clone, Debug)]
 pub struct Transform {
 	pub position: Vec3,
-	pub rotation: f32,
+	pub rotation: Quat, // Use quaternion for 3D rotation
 }
 
 impl Default for Transform {
 	fn default() -> Self {
 		Self {
 			position: Vec3::ZERO,
-			rotation: 0.0,
+			rotation: Quat::IDENTITY,
 		}
 	}
 }
 
 impl Transform {
 	pub fn model_matrix(&self) -> Mat4 {
-		Mat4::from_translation(self.position) * Mat4::from_rotation_z(self.rotation)
+		Mat4::from_translation(self.position) * Mat4::from_quat(self.rotation)
 	}
 }
 

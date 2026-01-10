@@ -1,7 +1,7 @@
 use leptos::{mount::mount_to_body, prelude::*, *};
 use console_error_panic_hook;
 use stylance::import_style;
-use glam::Vec3;
+use glam::{Vec3, Quat};
 
 mod renderer;
 use renderer::{Renderer, mesh::Mesh, scene::Scene};
@@ -29,20 +29,8 @@ fn App() -> impl IntoView {
 	}
 }
 
-const VERTEX_SHADER_SRC: &str = r#"
-	attribute vec3 position;
-	uniform mat4 model;
-	uniform mat4 view;
-	uniform mat4 projection;
-
-	void main() {
-		gl_Position = projection * view * model * vec4(position, 1.0);
-	}
-"#;
-
-const FRAGMENT_SHADER_SRC: &str = r#"
-	void main() { gl_FragColor = vec4(0.4, 0.8, 1.0, 1.0); }
-"#;
+const VERTEX_SHADER_SRC: &str = include_str!("./shaders/standard.vert");
+const FRAGMENT_SHADER_SRC: &str = include_str!("./shaders/standard.frag");
 
 #[component]
 fn Canvas() -> impl IntoView {
@@ -55,15 +43,16 @@ fn Canvas() -> impl IntoView {
 		renderer.camera.target = Vec3::new(0.0, -0.5, 0.0);
 		renderer.set_shader(VERTEX_SHADER_SRC, FRAGMENT_SHADER_SRC);
 
-		let quad_vertices = Primitive::Quad.vertices();
-		let quad_mesh = Mesh::new(&renderer.gl, &quad_vertices);
+		let cube_vertices = Primitive::Cube.vertices();
+		let cube_mesh = Mesh::new(&renderer.gl, &cube_vertices);
+		let rotation = Quat::from_rotation_y(45f32.to_radians());
 
 		let mut scene = Scene::new();
 		scene.add(
-			quad_mesh,
+			cube_mesh,
 			Transform {
 				position: Vec3::new(0.0, 0.0, 0.0),
-				rotation: 0.0,
+				rotation: rotation,
 			},
 		);
 

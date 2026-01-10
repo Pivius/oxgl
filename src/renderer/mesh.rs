@@ -1,8 +1,13 @@
 use web_sys::{WebGlBuffer, WebGlRenderingContext as GL};
+use crate::renderer::{Renderer, scene::Transform};
 
 pub struct Mesh {
 	pub vertex_buffer: WebGlBuffer,
 	pub vertex_count: i32,
+}
+
+pub trait Drawable {
+	fn draw(&self, renderer: &Renderer, transform: &Transform);
 }
 
 impl Mesh {
@@ -31,5 +36,11 @@ impl Mesh {
 		gl.enable_vertex_attrib_array(0);
 		gl.vertex_attrib_pointer_with_i32(0, 3, GL::FLOAT, false, 0, 0);
 		gl.draw_arrays(GL::TRIANGLES, 0, self.vertex_count);
+	}
+}
+
+impl Drawable for Mesh {
+	fn draw(&self, renderer: &Renderer, transform: &Transform) {
+		renderer.draw_mesh(self, transform);
 	}
 }
