@@ -1,5 +1,5 @@
 use web_sys::{WebGlBuffer, WebGlRenderingContext as GL};
-use crate::renderer::{Renderer, scene::Transform};
+use super::{Renderer, scene::Transform};
 
 pub struct Mesh {
 	pub vertex_buffer: WebGlBuffer,
@@ -29,13 +29,6 @@ impl Mesh {
 			vertex_buffer,
 			vertex_count: (vertices.len() / 3) as i32,
 		}
-	}
-
-	pub fn draw(&self, gl: &GL) {
-		gl.bind_buffer(GL::ARRAY_BUFFER, Some(&self.vertex_buffer));
-		gl.enable_vertex_attrib_array(0);
-		gl.vertex_attrib_pointer_with_i32(0, 3, GL::FLOAT, false, 0, 0);
-		gl.draw_arrays(GL::TRIANGLES, 0, self.vertex_count);
 	}
 }
 

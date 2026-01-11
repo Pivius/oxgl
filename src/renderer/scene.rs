@@ -1,10 +1,10 @@
-use super::mesh::Mesh;
+use super::{object::{Object, ObjectKind}, mesh::Drawable};
 use glam::{Vec3, Mat4, Quat};
 
 #[derive(Clone, Debug)]
 pub struct Transform {
 	pub position: Vec3,
-	pub rotation: Quat, // Use quaternion for 3D rotation
+	pub rotation: Quat,
 }
 
 impl Default for Transform {
@@ -22,13 +22,8 @@ impl Transform {
 	}
 }
 
-pub struct MeshInstance {
-	pub mesh: Mesh,
-	pub transform: Transform,
-}
-
 pub struct Scene {
-	pub objects: Vec<MeshInstance>,
+	pub objects: Vec<Object>,
 }
 
 impl Scene {
@@ -36,13 +31,18 @@ impl Scene {
 		Self { objects: Vec::new() }
 	}
 
-	pub fn add(&mut self, mesh: Mesh, transform: Transform) {
-		self.objects.push(MeshInstance { mesh, transform });
+	pub fn add(&mut self, object: Object) {
+		self.objects.push(object);
 	}
 
 	pub fn render(&self, renderer: &crate::renderer::Renderer) {
 		for obj in &self.objects {
-			renderer.draw_mesh(&obj.mesh, &obj.transform);
+			match &obj.kind {
+				ObjectKind::Mesh(mesh) => {
+					mesh.draw(renderer, &obj.transform);
+				}
+				_ => {}
+			}
 		}
 	}
 }

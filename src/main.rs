@@ -4,8 +4,7 @@ use stylance::import_style;
 use glam::{Vec3, Quat};
 
 mod renderer;
-use renderer::{Renderer, mesh::Mesh, scene::Scene};
-use crate::renderer::{primitive::Primitive, scene::Transform};
+use renderer::{Renderer, mesh::Mesh, scene::Scene, object::Object, primitive::Primitive, scene::Transform};
 
 fn main() {
 	console_error_panic_hook::set_once();
@@ -49,10 +48,12 @@ fn Canvas() -> impl IntoView {
 
 		let mut scene = Scene::new();
 		scene.add(
-			cube_mesh,
-			Transform {
-				position: Vec3::new(0.0, 0.0, 0.0),
-				rotation: rotation,
+			Object {
+				kind: renderer::object::ObjectKind::Mesh(cube_mesh),
+				transform: Transform {
+					position: Vec3::new(0.0, 0.0, 0.0),
+					rotation: rotation,
+				}
 			},
 		);
 
