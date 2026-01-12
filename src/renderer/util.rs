@@ -1,11 +1,11 @@
-pub enum RGBA {
+pub enum Color {
 	Rgba(u8, u8, u8, u8),
 }
 
-impl RGBA {
+impl Color {
 	pub fn to_hex_string(&self) -> String {
 		match *self {
-			RGBA::Rgba(r, g, b, a) => {
+			Color::Rgba(r, g, b, a) => {
 				format!(
 					"#{:02X}{:02X}{:02X}{:02X}",
 					r, g, b, a
@@ -23,11 +23,11 @@ impl RGBA {
 		let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
 		let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
 		let a = u8::from_str_radix(&hex[6..8], 16).ok()?;
-		Some(RGBA::Rgba(r, g, b, a))
+		Some(Color::Rgba(r, g, b, a))
 	}
 
 	pub fn to_hsv(&self) -> (f32, f32, f32, u8) {
-		let RGBA::Rgba(r, g, b, a) = *self;
+		let Color::Rgba(r, g, b, a) = *self;
 		let r = r as f32 / 255.0;
 		let g = g as f32 / 255.0;
 		let b = b as f32 / 255.0;
@@ -75,7 +75,7 @@ impl RGBA {
 		let g = ((g + m) * 255.0) as u8;
 		let b = ((b + m) * 255.0) as u8;
 
-		RGBA::Rgba(r, g, b, a)
+		Color::Rgba(r, g, b, a)
 	}
 
 	pub fn lighten(&self, amount: f32) -> Self {

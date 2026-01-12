@@ -9,7 +9,6 @@ pub struct Camera {
 	pub aspect: f32,
 	pub near: f32,
 	pub far: f32,
-	pub zoom: f32,
 }
 
 impl Camera {
@@ -22,8 +21,17 @@ impl Camera {
 			aspect,
 			near: 0.1,
 			far: 100.0,
-			zoom: 1.0,
 		}
+	}
+
+	pub fn with_position(mut self, pos: Vec3) -> Self {
+		self.position = pos;
+		self
+	}
+
+	pub fn with_target(mut self, target: Vec3) -> Self {
+		self.target = target;
+		self
 	}
 
 	pub fn view_matrix(&self) -> Mat4 {
@@ -31,27 +39,6 @@ impl Camera {
 	}
 
 	pub fn projection_matrix(&self) -> Mat4 {
-		Mat4::perspective_rh_gl(
-			self.fov_y / self.zoom,
-			self.aspect,
-			self.near,
-			self.far,
-		)
-	}
-
-	pub fn set_position(&mut self, pos: Vec3) {
-		self.position = pos;
-	}
-
-	pub fn set_target(&mut self, target: Vec3) {
-		self.target = target;
-	}
-
-	pub fn set_zoom(&mut self, zoom: f32) {
-		self.zoom = zoom.max(0.01);
-	}
-
-	pub fn set_aspect(&mut self, aspect: f32) {
-		self.aspect = aspect;
+		Mat4::perspective_rh_gl(self.fov_y, self.aspect, self.near, self.far)
 	}
 }

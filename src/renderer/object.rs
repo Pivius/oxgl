@@ -1,4 +1,4 @@
-use super::{camera::Camera, mesh::Mesh, scene::Transform, util::RGBA};
+use super::{camera::Camera, mesh::Mesh, scene::Transform, util::Color};
 
 pub enum ObjectKind {
 	Mesh(Mesh),
@@ -7,7 +7,7 @@ pub enum ObjectKind {
 }
 
 pub struct Light {
-	pub color: RGBA,
+	pub color: Color,
 	pub intensity: f32,
 }
 
