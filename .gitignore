@@ -1,4 +1,9 @@
 /target
-/styles
-/dist
+/demo/styles
+/demo/dist
 Cargo.lock
+
+.vscode/
+.idea/
+
+*.log
