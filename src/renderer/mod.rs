@@ -1,12 +1,12 @@
 pub mod mesh;
 pub mod shader;
-pub mod particles;
 pub mod scene;
 pub mod primitive;
 pub mod camera;
 pub mod util;
-pub mod object;
 pub mod animator;
+pub mod light;
+pub mod material;
 
 use std::{cell::RefCell, rc::Rc};
 use glam::Vec3;

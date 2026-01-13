@@ -1,4 +1,4 @@
-use super::{mesh::Mesh, camera::Camera, Renderer};
+use super::{mesh::Mesh, camera::Camera, light::Light, Renderer};
 use glam::{Vec3, Mat4, Quat};
 
 #[derive(Clone, Debug)]
@@ -49,11 +49,16 @@ pub struct SceneObject {
 pub struct Scene {
 	pub camera: Camera,
 	pub objects: Vec<SceneObject>,
+	pub lights: Vec<Light>,
 }
 
 impl Scene {
 	pub fn new(camera: Camera) -> Self {
-		Self { camera, objects: Vec::new() }
+		Self { 
+			camera, 
+			objects: Vec::new(),
+			lights: Vec::new(),
+		}
 	}
 
 	pub fn add(&mut self, mesh: Mesh, transform: Transform) -> usize {
@@ -62,13 +67,25 @@ impl Scene {
 		id
 	}
 
+	pub fn add_light(&mut self, light: Light) -> usize {
+		let id = self.lights.len();
+		self.lights.push(light);
+		id
+	}
+
 	pub fn get_mut(&mut self, id: usize) -> Option<&mut SceneObject> {
 		self.objects.get_mut(id)
 	}
 
+	pub fn get_light_mut(&mut self, id: usize) -> Option<&mut Light> {
+		self.lights.get_mut(id)
+	}
+
 	pub fn render(&self, renderer: &Renderer) {
+		renderer.gl.enable(web_sys::WebGlRenderingContext::DEPTH_TEST);
+		
 		for obj in &self.objects {
-			obj.mesh.draw(&renderer.gl, &obj.transform, &self.camera);
+			obj.mesh.draw(&renderer.gl, &obj.transform, &self.camera, &self.lights);
 		}
 	}
 }

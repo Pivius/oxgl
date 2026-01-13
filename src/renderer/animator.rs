@@ -8,7 +8,7 @@ pub struct Animator {
 impl Animator {
 	pub fn start<F>(mut update: F) -> Self 
 	where 
-		F: FnMut(f32) + 'static  // time in seconds
+		F: FnMut(f32) + 'static
 	{
 		let running = Rc::new(RefCell::new(true));
 		let running_clone = running.clone();
