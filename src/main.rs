@@ -3,14 +3,13 @@ use console_error_panic_hook;
 use stylance::import_style;
 use glam::{Quat, Vec3};
 
-mod renderer;
-use renderer::{
-	App, 
-	mesh::Mesh, 
-	scene::Transform, 
-	primitive::Primitive,
-	material::presets,
-	light::Light,
+mod core;
+mod canvas;
+
+use crate::{
+	canvas::{App, common::{material::presets, mesh::Mesh}, 
+	renderer_3d::{light::Light, primitive::Primitive}}, 
+	core::Transform3D
 };
 
 fn main() {
@@ -62,7 +61,7 @@ fn Canvas() -> impl IntoView {
 				&Primitive::Cube.vertices_with_normals(),
 				presets::phong(&app.renderer.gl, Vec3::new(0.4, 0.8, 0.4))
 			),
-			Transform::new().with_position(Vec3::new(0.0, 0.5, 0.0))
+			Transform3D::new().with_position(Vec3::new(0.0, 0.5, 0.0))
 		);
 
 		app.run(move |scene, time| {

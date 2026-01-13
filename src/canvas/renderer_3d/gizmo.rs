@@ -2,7 +2,7 @@ use glam::{Vec3, Mat4};
 use web_sys::{WebGlBuffer, WebGlProgram, WebGlRenderingContext as GL};
 use std::cell::RefCell;
 
-use super::{shader::{compile_shader, link_program}, camera::Camera};
+use crate::canvas::common::{shader::{compile_shader, link_program}, camera::Camera};
 
 const GIZMO_VERT: &str = r#"
 	attribute vec3 position;

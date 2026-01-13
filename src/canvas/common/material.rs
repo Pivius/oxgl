@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use glam::{Vec2, Vec3, Vec4, Mat4};
 use web_sys::{WebGlProgram, WebGlRenderingContext as GL};
 
-use super::{shader::{compile_shader, link_program}, light::{Light, apply_lights}};
+use crate::canvas::renderer_3d::light::{Light, apply_lights};
+use super::shader::{compile_shader, link_program};
 
 #[derive(Clone, Debug)]
 pub enum Uniform {
@@ -140,12 +141,12 @@ pub mod presets {
 	use glam::{Vec3, Vec4};
 	use web_sys::WebGlRenderingContext as GL;
 
-	const UNLIT_VERT: &str = include_str!("../shaders/unlit.vert");
-	const UNLIT_FRAG: &str = include_str!("../shaders/unlit.frag");
-	const LAMBERT_VERT: &str = include_str!("../shaders/lambert.vert");
-	const LAMBERT_FRAG: &str = include_str!("../shaders/lambert.frag");
-	const PHONG_VERT: &str = include_str!("../shaders/phong.vert");
-	const PHONG_FRAG: &str = include_str!("../shaders/phong.frag");
+	const UNLIT_VERT: &str = include_str!("../../shaders/unlit.vert");
+	const UNLIT_FRAG: &str = include_str!("../../shaders/unlit.frag");
+	const LAMBERT_VERT: &str = include_str!("../../shaders/lambert.vert");
+	const LAMBERT_FRAG: &str = include_str!("../../shaders/lambert.frag");
+	const PHONG_VERT: &str = include_str!("../../shaders/phong.vert");
+	const PHONG_FRAG: &str = include_str!("../../shaders/phong.frag");
 
 	pub fn unlit(gl: &GL, color: Vec4) -> Material {
 		MaterialBuilder::new(gl, UNLIT_VERT, UNLIT_FRAG)

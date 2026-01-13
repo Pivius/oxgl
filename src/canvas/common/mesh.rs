@@ -1,11 +1,9 @@
 use web_sys::{WebGlBuffer, WebGlRenderingContext as GL};
 
-use super::{
-	scene::Transform, 
-	camera::Camera, 
-	material::Material,
-	light::Light,
-	primitive::VertexData,
+use super::{camera::Camera, material::Material};
+use crate::{
+	canvas::renderer_3d::{primitive::VertexData, light::Light},
+	core::{Transform3D, Transformable}
 };
 
 pub struct Mesh {
@@ -63,7 +61,7 @@ impl Mesh {
 		}
 	}
 
-	pub fn draw(&self, gl: &GL, transform: &Transform, camera: &Camera, lights: &[Light]) {
+	pub fn draw(&self, gl: &GL, transform: &Transform3D, camera: &Camera, lights: &[Light]) {
 		let program = self.material.program();
 
 		gl.use_program(Some(program));
@@ -71,7 +69,7 @@ impl Mesh {
 
 		if let Some(loc) = gl.get_uniform_location(program, "model") {
 			gl.uniform_matrix4fv_with_f32_array(
-				Some(&loc), false, &transform.model_matrix().to_cols_array()
+				Some(&loc), false, &transform.to_matrix().to_cols_array()
 			);
 		}
 		if let Some(loc) = gl.get_uniform_location(program, "view") {

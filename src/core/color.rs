@@ -1,3 +1,5 @@
+/// # Color
+/// RGBA color representation
 pub enum Color {
 	Rgba(u8, u8, u8, u8),
 }

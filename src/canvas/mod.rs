@@ -1,18 +1,14 @@
-pub mod mesh;
-pub mod shader;
-pub mod scene;
-pub mod primitive;
-pub mod camera;
-pub mod util;
-pub mod animator;
-pub mod material;
-pub mod light;
-pub mod gizmo;
+pub mod common;
+pub mod renderer_3d;
 
 use std::{cell::RefCell, rc::Rc};
 use glam::Vec3;
 use web_sys::{HtmlCanvasElement, WebGlRenderingContext as GL, wasm_bindgen::JsCast};
-use crate::renderer::{animator::Animator, camera::Camera, scene::Scene, gizmo::GizmoRenderer};
+
+use crate::{
+	canvas::{renderer_3d::{scene::Scene, gizmo::GizmoRenderer}, common::camera::Camera},
+	core::Animator
+};
 
 pub struct Renderer {
 	pub gl: GL,
@@ -47,7 +43,7 @@ impl Renderer {
 	}
 }
 
-pub use scene::DebugSettings;
+pub use renderer_3d::scene::DebugSettings;
 
 pub struct App {
 	pub renderer: Rc<Renderer>,

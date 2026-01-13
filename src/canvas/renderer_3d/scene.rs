@@ -1,56 +1,15 @@
 use glam::{Vec3, Mat4, Quat};
 use slotmap::{SlotMap, new_key_type};
+use super::{light::{Light, LightType}, gizmo::GizmoRenderer};
+use crate::{
+	canvas::{common::{mesh::Mesh, camera::Camera}, Renderer},
+	core::{ObjectId, LightId, Transform3D},
+};
 
-use super::{mesh::Mesh, camera::Camera, light::{Light, LightType}, gizmo::GizmoRenderer, Renderer};
-
-new_key_type! {
-	pub struct ObjectId;
-	pub struct LightId;
-}
-
-#[derive(Clone, Debug)]
-pub struct Transform {
-	pub position: Vec3,
-	pub rotation: Quat,
-	pub scale: Vec3,
-}
-
-impl Default for Transform {
-	fn default() -> Self {
-		Self {
-			position: Vec3::ZERO,
-			rotation: Quat::IDENTITY,
-			scale: Vec3::ONE,
-		}
-	}
-}
-
-impl Transform {
-	pub fn new() -> Self { Self::default() }
-
-	pub fn with_position(mut self, pos: Vec3) -> Self {
-		self.position = pos;
-		self
-	}
-
-	pub fn with_rotation(mut self, rot: Quat) -> Self {
-		self.rotation = rot;
-		self
-	}
-
-	pub fn with_scale(mut self, scale: Vec3) -> Self {
-		self.scale = scale;
-		self
-	}
-
-	pub fn model_matrix(&self) -> Mat4 {
-		Mat4::from_scale_rotation_translation(self.scale, self.rotation, self.position)
-	}
-}
 
 pub struct SceneObject {
 	pub mesh: Mesh,
-	pub transform: Transform,
+	pub transform: Transform3D,
 }
 
 pub struct Scene {
@@ -90,7 +49,7 @@ impl Scene {
 		}
 	}
 
-	pub fn add(&mut self, mesh: Mesh, transform: Transform) -> ObjectId {
+	pub fn add(&mut self, mesh: Mesh, transform: Transform3D) -> ObjectId {
 		self.objects.insert(SceneObject { mesh, transform })
 	}
 
