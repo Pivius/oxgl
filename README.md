@@ -5,7 +5,7 @@ A lightweight WebGL rendering library for Rust, targeting WebAssembly.
 ## Repository Structure
 
 ```
-├── oxgl/       # Core library (publishable crate)
+├── oxgl/       # Core library
 └── demo/       # Example Leptos application
 ```
 
@@ -32,7 +32,7 @@ oxgl = "0.1.0"
 The demo showcases:
 - Phong-shaded rotating cube
 - Animated point light
-- Debug gizmos (grid, axes, light indicators)
+- Debug gizmos
 
 ```rust
 use oxgl::{App, core::Transform3D, common::{material::presets, mesh::Mesh}, renderer_3d::{light::Light, primitive::Primitive}};

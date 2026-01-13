@@ -2,15 +2,6 @@
 
 A lightweight WebGL rendering library for Rust, targeting WebAssembly.
 
-## Features
-
-- **3D Rendering** — Scene graph with transforms, meshes, and materials
-- **Lighting** — Point, directional, and spot lights with Phong/Lambert shading
-- **Materials** — Prebuilt shaders (unlit, lambert, phong) with custom uniform support
-- **Primitives** — Cube, sphere, plane, cylinder out of the box
-- **Gizmos** — Debug visualization for lights and objects
-- **Animation Loop** — Built-in requestAnimationFrame wrapper
-
 ## Installation
 
 ```toml
@@ -78,14 +69,6 @@ app.run(|scene, time| {
 | `core` | Transform, Color, Animator, ID types |
 | `common` | Mesh, Material, Shader, Camera |
 | `renderer_3d` | Scene, Light, Gizmo, Primitives |
-
-## Shaders
-
-Built-in shaders:
-
-- **Unlit** — No lighting, flat color/texture
-- **Lambert** — Diffuse-only lighting
-- **Phong** — Diffuse + specular highlights
 
 ## License
 
