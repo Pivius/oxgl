@@ -1,5 +1,5 @@
-use glam::{Vec3, Mat4, Quat};
-use slotmap::{SlotMap, new_key_type};
+use glam::Vec3;
+use slotmap::SlotMap;
 use super::{light::{Light, LightType}, gizmo::GizmoRenderer};
 use crate::{
 	common::{mesh::Mesh, camera::Camera}, 
