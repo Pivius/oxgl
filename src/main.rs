@@ -1,7 +1,7 @@
 use leptos::{mount::mount_to_body, prelude::*, *};
 use console_error_panic_hook;
 use stylance::import_style;
-use glam::{Quat, Vec3, Vec4};
+use glam::{Quat, Vec3};
 
 mod renderer;
 use renderer::{
@@ -70,7 +70,6 @@ fn Canvas() -> impl IntoView {
 				obj.transform.rotation = Quat::from_rotation_y(time);
 			}
 
-			// Animate point light position
 			if let Some(light) = scene.get_light_mut(point_light_id) {
 				light.position = Vec3::new(time.cos() * 3.0, 1.0, time.sin() * 3.0);
 			}

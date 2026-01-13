@@ -98,10 +98,9 @@ impl App {
 			renderer.clear();
 			
 			{
-				let scene = scene.borrow();
+				let mut scene = scene.borrow_mut();
 				scene.render(&renderer);
-				
-				// Render debug gizmos
+
 				let settings = debug.borrow();
 				scene.render_debug(&renderer, &gizmos, &settings, false);
 			}

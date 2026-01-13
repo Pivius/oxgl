@@ -1,5 +1,12 @@
-use super::{mesh::Mesh, camera::Camera, light::{Light, LightType}, gizmo::GizmoRenderer, Renderer};
 use glam::{Vec3, Mat4, Quat};
+use slotmap::{SlotMap, new_key_type};
+
+use super::{mesh::Mesh, camera::Camera, light::{Light, LightType}, gizmo::GizmoRenderer, Renderer};
+
+new_key_type! {
+	pub struct ObjectId;
+	pub struct LightId;
+}
 
 #[derive(Clone, Debug)]
 pub struct Transform {
@@ -48,8 +55,8 @@ pub struct SceneObject {
 
 pub struct Scene {
 	pub camera: Camera,
-	pub objects: Vec<SceneObject>,
-	pub lights: Vec<Light>,
+	pub objects: SlotMap<ObjectId, SceneObject>,
+	pub lights: SlotMap<LightId, Light>,
 }
 
 pub struct DebugSettings {
@@ -78,43 +85,49 @@ impl Scene {
 	pub fn new(camera: Camera) -> Self {
 		Self { 
 			camera, 
-			objects: Vec::new(),
-			lights: Vec::new(),
+			objects: SlotMap::with_key(),
+			lights: SlotMap::with_key(),
 		}
 	}
 
-	pub fn add(&mut self, mesh: Mesh, transform: Transform) -> usize {
-		let id = self.objects.len();
-		self.objects.push(SceneObject { mesh, transform });
-		id
+	pub fn add(&mut self, mesh: Mesh, transform: Transform) -> ObjectId {
+		self.objects.insert(SceneObject { mesh, transform })
 	}
 
-	pub fn add_light(&mut self, light: Light) -> usize {
-		let id = self.lights.len();
-		self.lights.push(light);
-		id
+	pub fn add_light(&mut self, light: Light) -> LightId {
+		self.lights.insert(light)
 	}
 
-	pub fn get_mut(&mut self, id: usize) -> Option<&mut SceneObject> {
+	pub fn remove(&mut self, id: ObjectId) -> Option<SceneObject> {
+		self.objects.remove(id)
+	}
+
+	pub fn remove_light(&mut self, id: LightId) -> Option<Light> {
+		self.lights.remove(id)
+	}
+
+	pub fn get_mut(&mut self, id: ObjectId) -> Option<&mut SceneObject> {
 		self.objects.get_mut(id)
 	}
 
-	pub fn get_light_mut(&mut self, id: usize) -> Option<&mut Light> {
+	pub fn get_light_mut(&mut self, id: LightId) -> Option<&mut Light> {
 		self.lights.get_mut(id)
 	}
 
-	pub fn render(&self, renderer: &Renderer) {
+	pub fn render(&mut self, renderer: &Renderer) {
 		renderer.gl.enable(web_sys::WebGlRenderingContext::DEPTH_TEST);
 		
-		for obj in &self.objects {
-			obj.mesh.draw(&renderer.gl, &obj.transform, &self.camera, &self.lights);
+		let lights: Vec<Light> = self.lights.values().cloned().collect();
+		
+		for obj in self.objects.values_mut() {
+			obj.mesh.draw(&renderer.gl, &obj.transform, &self.camera, &lights);
 		}
 	}
 
 	pub fn render_debug(&self, renderer: &Renderer, gizmos: &GizmoRenderer, settings: &DebugSettings, disable_depth: bool) {
 		let gl = &renderer.gl;
 
-		if (disable_depth) {
+		if disable_depth {
 			gl.disable(web_sys::WebGlRenderingContext::DEPTH_TEST);
 		}
 
@@ -133,63 +146,30 @@ impl Scene {
 		}
 
 		if settings.show_light_gizmos {
-			for light in &self.lights {
+			for light in self.lights.values() {
 				match &light.light_type {
 					LightType::Directional => {
 						let origin = Vec3::new(0.0, 3.0, 0.0);
-						gizmos.arrow(
-							gl, 
-							&self.camera, 
-							origin, 
-							light.direction, 
-							2.0, 
-							Vec3::new(1.0, 1.0, 0.0) // Yellow
-						);
+						gizmos.arrow(gl, &self.camera, origin, light.direction, 2.0, Vec3::new(1.0, 1.0, 0.0));
 					}
 					LightType::Point { radius } => {
-						gizmos.wire_sphere(
-							gl, 
-							&self.camera, 
-							light.position, 
-							*radius * 0.1, 
-							Vec3::new(1.0, 1.0, 0.0)
-						);
-						// influence radius
-						gizmos.wire_sphere(
-							gl, 
-							&self.camera, 
-							light.position, 
-							*radius, 
-							Vec3::new(0.5, 0.5, 0.0)
-						);
+						gizmos.wire_sphere(gl, &self.camera, light.position, *radius * 0.1, Vec3::new(1.0, 1.0, 0.0));
+						gizmos.wire_sphere(gl, &self.camera, light.position, *radius, Vec3::new(0.5, 0.5, 0.0));
 					}
-					LightType::Spot { angle, .. } => {
-						gizmos.arrow(
-							gl, 
-							&self.camera, 
-							light.position, 
-							light.direction, 
-							1.5, 
-							Vec3::new(1.0, 0.8, 0.0)
-						);
+					LightType::Spot { .. } => {
+						gizmos.arrow(gl, &self.camera, light.position, light.direction, 1.5, Vec3::new(1.0, 0.8, 0.0));
 					}
 				}
 			}
 		}
 
 		if settings.show_object_bounds {
-			for obj in &self.objects {
-				gizmos.wire_cube(
-					gl, 
-					&self.camera, 
-					obj.transform.position, 
-					obj.transform.scale.max_element(), 
-					Vec3::new(0.0, 1.0, 1.0) // Cyan
-				);
+			for obj in self.objects.values() {
+				gizmos.wire_cube(gl, &self.camera, obj.transform.position, obj.transform.scale.max_element(), Vec3::new(0.0, 1.0, 1.0));
 			}
 		}
 
-		if (disable_depth) {
+		if disable_depth {
 			gl.enable(web_sys::WebGlRenderingContext::DEPTH_TEST);
 		}
 	}
