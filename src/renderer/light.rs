@@ -48,7 +48,25 @@ impl Light {
 		}
 	}
 
+	pub fn type_id(&self) -> i32 {
+		match self.light_type {
+			LightType::Directional => 0,
+			LightType::Point { .. } => 1,
+			LightType::Spot { .. } => 2,
+		}
+	}
+
+	pub fn radius(&self) -> f32 {
+		match self.light_type {
+			LightType::Point { radius } => radius,
+			_ => 0.0,
+		}
+	}
+
 	pub fn apply_uniforms(&self, gl: &GL, program: &WebGlProgram) {
+		if let Some(loc) = gl.get_uniform_location(program, "lightType") {
+			gl.uniform1i(Some(&loc), self.type_id());
+		}
 		if let Some(loc) = gl.get_uniform_location(program, "lightDirection") {
 			gl.uniform3fv_with_f32_array(Some(&loc), &self.direction.to_array());
 		}
@@ -60,6 +78,40 @@ impl Light {
 		}
 		if let Some(loc) = gl.get_uniform_location(program, "lightIntensity") {
 			gl.uniform1f(Some(&loc), self.intensity);
+		}
+		if let Some(loc) = gl.get_uniform_location(program, "lightRadius") {
+			gl.uniform1f(Some(&loc), self.radius());
+		}
+	}
+}
+
+pub fn apply_lights(gl: &GL, program: &WebGlProgram, lights: &[Light]) {
+	const MAX_LIGHTS: usize = 4;
+
+	if let Some(loc) = gl.get_uniform_location(program, "numLights") {
+		gl.uniform1i(Some(&loc), lights.len().min(MAX_LIGHTS) as i32);
+	}
+
+	for (i, light) in lights.iter().take(MAX_LIGHTS).enumerate() {
+		let prefix = format!("lights[{}].", i);
+
+		if let Some(loc) = gl.get_uniform_location(program, &format!("{}type", prefix)) {
+			gl.uniform1i(Some(&loc), light.type_id());
+		}
+		if let Some(loc) = gl.get_uniform_location(program, &format!("{}direction", prefix)) {
+			gl.uniform3fv_with_f32_array(Some(&loc), &light.direction.to_array());
+		}
+		if let Some(loc) = gl.get_uniform_location(program, &format!("{}position", prefix)) {
+			gl.uniform3fv_with_f32_array(Some(&loc), &light.position.to_array());
+		}
+		if let Some(loc) = gl.get_uniform_location(program, &format!("{}color", prefix)) {
+			gl.uniform3fv_with_f32_array(Some(&loc), &light.color.to_array());
+		}
+		if let Some(loc) = gl.get_uniform_location(program, &format!("{}intensity", prefix)) {
+			gl.uniform1f(Some(&loc), light.intensity);
+		}
+		if let Some(loc) = gl.get_uniform_location(program, &format!("{}radius", prefix)) {
+			gl.uniform1f(Some(&loc), light.radius());
 		}
 	}
 }

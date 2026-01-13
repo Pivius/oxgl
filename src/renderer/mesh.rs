@@ -67,7 +67,6 @@ impl Mesh {
 		let program = self.material.program();
 
 		gl.use_program(Some(program));
-
 		self.material.apply(gl, lights);
 
 		if let Some(loc) = gl.get_uniform_location(program, "model") {
@@ -85,6 +84,7 @@ impl Mesh {
 				Some(&loc), false, &camera.projection_matrix().to_cols_array()
 			);
 		}
+		// specular calculations
 		if let Some(loc) = gl.get_uniform_location(program, "cameraPosition") {
 			gl.uniform3fv_with_f32_array(
 				Some(&loc), &camera.position.to_array()
@@ -104,7 +104,7 @@ impl Mesh {
 
 		if self.has_normals {
 			let norm_loc = gl.get_attrib_location(program, "normal");
-			
+
 			if norm_loc >= 0 {
 				gl.enable_vertex_attrib_array(norm_loc as u32);
 				gl.vertex_attrib_pointer_with_i32(

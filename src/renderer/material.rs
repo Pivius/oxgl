@@ -2,8 +2,7 @@ use std::collections::HashMap;
 use glam::{Vec2, Vec3, Vec4, Mat4};
 use web_sys::{WebGlProgram, WebGlRenderingContext as GL};
 
-use super::shader::{compile_shader, link_program};
-use super::light::Light;
+use super::{shader::{compile_shader, link_program}, light::{Light, apply_lights}};
 
 #[derive(Clone, Debug)]
 pub enum Uniform {
@@ -82,10 +81,7 @@ impl Material {
 			}
 		}
 
-		// Apply first light if available
-		if let Some(light) = lights.first() {
-			light.apply_uniforms(gl, &self.program);
-		}
+		apply_lights(gl, &self.program, lights);
 	}
 }
 
