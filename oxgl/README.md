@@ -21,36 +21,54 @@ oxgl = "0.1.0"
 ## Quick Start
 
 ```rust
-use oxgl::{App, Scene, Mesh, Light, Transform3D, material::presets, primitive::Primitive};
+use oxgl::{
+    App, 
+    core::Transform3D, 
+    common::{material::presets, mesh::Mesh}, 
+    renderer_3d::light::Light
+};
 use glam::{Vec3, Quat};
 
 // Create the app
-let app = App::new("canvas-id").expect("Failed to create app");
+let app = App::new("canvas-id");
 
-// Build a scene
-let mut scene = Scene::new();
+// Enable debug visuals
+{
+    let mut debug = app.debug.borrow_mut();
+    debug.show_grid = true;
+    debug.show_axes = true;
+    debug.show_light_gizmos = true;
+}
 
-// Add a mesh
-let cube = Mesh::builder()
-    .geometry(Primitive::Cube.into())
-    .material(presets::lambert())
-    .transform(Transform3D::new().with_position(Vec3::ZERO))
-    .build();
+// Add a mesh with phong shading
+let cube = app.scene.borrow_mut().add(
+    Mesh::with_normals(
+        presets::phong(&app.renderer.gl, Vec3::new(0.4, 0.8, 0.4))
+    ),
+    Transform3D::new().with_position(Vec3::new(0.0, 0.5, 0.0))
+);
 
-scene.add_object(cube);
+// Add a point light
+let light_id = app.scene.borrow_mut().add_light(
+    Light::point(Vec3::new(2.0, 1.0, 0.0))
+);
 
-// Add a light
-let light = Light::point()
-    .with_position(Vec3::new(2.0, 3.0, 2.0))
-    .with_color(Vec3::ONE)
-    .with_intensity(1.0);
+// Run the animation loop
+app.run(|scene, time| {
+    // Rotate the cube
+    if let Some(obj) = scene.get_mut(cube) {
+        obj.transform.rotation = Quat::from_rotation_y(time);
+    }
 
-scene.add_light(light);
-
-// Render loop
-Animator::new(move |dt| {
-    app.render(&scene);
-}).start();
+    // Animate the light position
+    if let Some(light) = scene.get_light_mut(light_id) {
+        light.set_position(Vec3::new(
+            time.cos() * 2.0,
+            1.0,
+            time.sin() * 2.0
+        ));
+    }
+});
 ```
 
 ## Modules
@@ -60,7 +78,6 @@ Animator::new(move |dt| {
 | `core` | Transform, Color, Animator, ID types |
 | `common` | Mesh, Material, Shader, Camera |
 | `renderer_3d` | Scene, Light, Gizmo, Primitives |
-
 
 ## Shaders
 

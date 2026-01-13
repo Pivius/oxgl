@@ -1,4 +1,4 @@
-use leptos::{mount::mount_to_body, prelude::*, *};
+use leptos::{mount::mount_to_body, prelude::*};
 use console_error_panic_hook;
 use stylance::import_style;
 use glam::{Quat, Vec3};
