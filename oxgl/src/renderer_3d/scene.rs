@@ -2,8 +2,9 @@ use glam::{Vec3, Mat4, Quat};
 use slotmap::{SlotMap, new_key_type};
 use super::{light::{Light, LightType}, gizmo::GizmoRenderer};
 use crate::{
-	canvas::{common::{mesh::Mesh, camera::Camera}, Renderer},
+	common::{mesh::Mesh, camera::Camera}, 
 	core::{ObjectId, LightId, Transform3D},
+	Renderer
 };
 
 

@@ -2,14 +2,10 @@ use leptos::{mount::mount_to_body, prelude::*, *};
 use console_error_panic_hook;
 use stylance::import_style;
 use glam::{Quat, Vec3};
-
-mod core;
-mod canvas;
-
-use crate::{
-	canvas::{App, common::{material::presets, mesh::Mesh}, 
-	renderer_3d::{light::Light, primitive::Primitive}}, 
-	core::Transform3D
+use oxgl::{
+	App, core::Transform3D, 
+	common::{material::presets, mesh::Mesh}, 
+	renderer_3d::{light::Light, primitive::Primitive}
 };
 
 fn main() {

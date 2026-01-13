@@ -2,7 +2,7 @@ use web_sys::{WebGlBuffer, WebGlRenderingContext as GL};
 
 use super::{camera::Camera, material::Material};
 use crate::{
-	canvas::renderer_3d::{primitive::VertexData, light::Light},
+	renderer_3d::{primitive::VertexData, light::Light},
 	core::{Transform3D, Transformable}
 };
 

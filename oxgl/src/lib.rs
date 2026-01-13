@@ -1,3 +1,4 @@
+pub mod core;
 pub mod common;
 pub mod renderer_3d;
 
@@ -5,10 +6,7 @@ use std::{cell::RefCell, rc::Rc};
 use glam::Vec3;
 use web_sys::{HtmlCanvasElement, WebGlRenderingContext as GL, wasm_bindgen::JsCast};
 
-use crate::{
-	canvas::{renderer_3d::{scene::Scene, gizmo::GizmoRenderer}, common::camera::Camera},
-	core::Animator
-};
+use crate::{renderer_3d::{scene::Scene, gizmo::GizmoRenderer}, common::camera::Camera, core::Animator};
 
 pub struct Renderer {
 	pub gl: GL,
@@ -68,7 +66,6 @@ impl App {
 		Self { renderer, scene, gizmos, debug }
 	}
 
-	/// Toggle debug visualization
 	pub fn set_debug(&self, enabled: bool) {
 		let mut settings = self.debug.borrow_mut();
 		settings.show_grid = enabled;

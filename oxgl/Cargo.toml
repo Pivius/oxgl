@@ -1,0 +1,19 @@
+[package]
+name = "oxgl"
+version = "0.1.0"
+edition = "2024"
+description = "A WebGL rendering engine for the web for Rust."
+license = "MIT"
+repository = "https://github.com/Pivius/oxgl"
+
+[dependencies]
+glam = "0.30.10"
+log = "0.4.29"
+slotmap = "1.1.1"
+web-sys = { version = "0.3.83", features = [
+	"WebGlRenderingContext",
+	"WebGlUniformLocation",
+	"WebGlBuffer",
+	"WebGlProgram",
+	"WebGlShader",
+] }

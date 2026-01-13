@@ -1,21 +1,3 @@
-[package]
-name = "webdemo"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-console_error_panic_hook = "0.1.7"
-console_log = "1.0.0"
-glam = "0.30.10"
-leptos = { version = "0.8.15", features = ["csr"] }
-leptos-use = "0.17.0"
-log = "0.4.29"
-slotmap = "1.1.1"
-stylance = "0.7.4"
-web-sys = { version = "0.3.83", features = [
-	"WebGlRenderingContext",
-	"WebGlUniformLocation",
-	"WebGlBuffer",
-	"WebGlProgram",
-	"WebGlShader",
-] }
+[workspace]
+resolver = "2"
+members = ["oxgl", "demo"]
