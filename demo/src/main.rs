@@ -4,8 +4,8 @@ use stylance::import_style;
 use glam::{Quat, Vec3};
 use oxgl::{
 	App, core::Transform3D, 
-	common::{material::presets, mesh::Mesh}, 
-	renderer_3d::{light::Light, primitive::Primitive}
+	common::{material::presets, Mesh}, 
+	renderer_3d::{Light, Primitive, PostProcessStack, postprocessing::presets as pp_presets},
 };
 
 fn main() {
@@ -25,23 +25,35 @@ fn Root() -> impl IntoView {
 	}
 }
 
+const CANVAS_WIDTH: i32 = 800;
+const CANVAS_HEIGHT: i32 = 600;
+
 #[component]
 fn Canvas() -> impl IntoView {
 	let canvas_ref = NodeRef::new();
 
 	Effect::new(move |_| {
 		let app = App::new("webgl-canvas");
+		let gl = &app.renderer.gl;
+		let _ = app.scene.borrow_mut().enable_shadows(gl);
 
 		{
-			let mut debug = app.debug.borrow_mut();
-			debug.show_grid = true;
-			debug.show_axes = true;
-			debug.show_light_gizmos = true;
-			debug.show_object_bounds = true;
-			debug.grid_size = 10.0;
-			debug.grid_divisions = 10;
+			//let mut debug = app.debug.borrow_mut();
+			//debug.show_grid = true;
+			//debug.show_axes = true;
+			//debug.show_light_gizmos = true;
+			//debug.show_object_bounds = true;
+			//debug.grid_size = 10.0;
+			//debug.grid_divisions = 10;
 		}
-		let _ = app.scene.borrow_mut().enable_shadows(&app.renderer.gl);
+
+		let mut post_process = PostProcessStack::new(gl, CANVAS_WIDTH, CANVAS_HEIGHT).unwrap();
+		let _ = post_process.push(pp_presets::vignette(gl, 0.8, 0.4));
+		let _ = post_process.push(pp_presets::chromatic_aberration(gl, 10.0));
+		let _ = post_process.push(pp_presets::film_grain(gl, 0.1));
+
+		app.scene.borrow_mut().set_post_process(post_process);
+		
 		let point_light_id = app.scene.borrow_mut().add_light(
 			Light::point(
 				Vec3::new(2.0, 1.0, 0.0),
@@ -96,6 +108,6 @@ fn Canvas() -> impl IntoView {
 	});
 
 	view! {
-		<canvas node_ref=canvas_ref class=style::gl_canvas id="webgl-canvas" width="800" height="600"></canvas>
+		<canvas node_ref=canvas_ref class=style::gl_canvas id="webgl-canvas" width=CANVAS_WIDTH height=CANVAS_HEIGHT></canvas>
 	}
 }

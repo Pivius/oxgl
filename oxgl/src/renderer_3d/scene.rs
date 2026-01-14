@@ -1,7 +1,7 @@
 use glam::{Vec3, Mat4};
 use slotmap::SlotMap;
 use web_sys::WebGl2RenderingContext as GL;
-use super::{Light, LightType, GizmoRenderer, ShadowMap};
+use super::{Light, LightType, GizmoRenderer, ShadowMap, PostProcessStack};
 use crate::{
 	common::{Mesh, Camera, Material}, 
 	core::{ObjectId, LightId, Transform3D, Transformable},
@@ -20,6 +20,7 @@ pub struct Scene {
 	pub shadow_map: Option<ShadowMap>,
 	shadow_material: Option<Material>,
 	pub shadows_enabled: bool,
+	pub post_process: Option<PostProcessStack>,
 }
 
 pub struct DebugSettings {
@@ -34,9 +35,9 @@ pub struct DebugSettings {
 impl Default for DebugSettings {
 	fn default() -> Self {
 		Self {
-			show_grid: true,
-			show_axes: true,
-			show_light_gizmos: true,
+			show_grid: false,
+			show_axes: false,
+			show_light_gizmos: false,
 			show_object_bounds: false,
 			grid_size: 10.0,
 			grid_divisions: 10,
@@ -53,6 +54,7 @@ impl Scene {
 			shadow_map: None,
 			shadow_material: None,
 			shadows_enabled: false,
+			post_process: None,
 		}
 	}
 
@@ -157,16 +159,33 @@ impl Scene {
 		shadow_map.unbind(gl, canvas_width, canvas_height);
 	}
 
-	pub fn render(&mut self, renderer: &Renderer) {
+	pub fn set_post_process(&mut self, stack: PostProcessStack) {
+		self.post_process = Some(stack);
+	}
+
+	pub fn render(&mut self, renderer: &Renderer, time: f32) {
 		let gl = &renderer.gl;
-		
 		let canvas = renderer.canvas();
 		let width = canvas.width() as i32;
 		let height = canvas.height() as i32;
 		let shadows_active = self.shadows_enabled && self.has_shadow_casting_light();
 
+		if let Some(pp) = &self.post_process {
+			pp.begin(gl);
+		} else {
+			gl.bind_framebuffer(GL::FRAMEBUFFER, None);
+			gl.viewport(0, 0, width, height);
+		}
+
+		gl.clear_color(0.1, 0.1, 0.1, 1.0);
+		gl.clear(GL::COLOR_BUFFER_BIT | GL::DEPTH_BUFFER_BIT);
+
 		if shadows_active {
 			self.render_shadow_pass(gl, width, height);
+
+			if let Some(pp) = &self.post_process {
+				pp.begin(gl);
+			}
 		}
 
 		gl.enable(GL::DEPTH_TEST);
@@ -186,6 +205,7 @@ impl Scene {
 
 		for obj in self.objects.values_mut() {
 			let program = obj.mesh.material.program();
+
 			gl.use_program(Some(program));
 			
 			if let Some(loc) = gl.get_uniform_location(program, "shadowsEnabled") {
@@ -204,6 +224,10 @@ impl Scene {
 			}
 			
 			obj.mesh.draw(gl, &obj.transform, &self.camera, &lights);
+		}
+
+		if let Some(pp) = &mut self.post_process {
+			pp.end(gl, time);
 		}
 	}
 

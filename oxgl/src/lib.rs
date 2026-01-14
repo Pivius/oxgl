@@ -6,7 +6,7 @@ use std::{cell::RefCell, rc::Rc};
 use glam::Vec3;
 use web_sys::{HtmlCanvasElement, WebGl2RenderingContext as GL, wasm_bindgen::JsCast};
 
-use crate::{renderer_3d::{Scene, GizmoRenderer}, common::Camera, core::Animator};
+use crate::{renderer_3d::{Scene, GizmoRenderer, DebugSettings}, common::Camera, core::Animator};
 
 pub struct Renderer {
 	pub gl: GL,
@@ -44,8 +44,6 @@ impl Renderer {
 		self.gl.clear(GL::COLOR_BUFFER_BIT | GL::DEPTH_BUFFER_BIT);
 	}
 }
-
-pub use renderer_3d::scene::DebugSettings;
 
 pub struct App {
 	pub renderer: Rc<Renderer>,
@@ -87,16 +85,16 @@ impl App {
 		let debug = self.debug;
 
 		Animator::start(move |time| {
+			//renderer.clear();
+			
 			{
 				let mut scene = scene.borrow_mut();
 				update(&mut scene, time);
 			}
-			
-			renderer.clear();
-			
+
 			{
 				let mut scene = scene.borrow_mut();
-				scene.render(&renderer);
+				scene.render(&renderer, time);
 
 				let settings = debug.borrow();
 				scene.render_debug(&renderer, &gizmos, &settings, false);
