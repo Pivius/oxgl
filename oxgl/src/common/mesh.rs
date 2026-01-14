@@ -1,8 +1,8 @@
 use web_sys::{WebGlBuffer, WebGlRenderingContext as GL};
 
-use super::{camera::Camera, material::Material, loader::MeshData};
+use super::{Camera, Material, MeshData};
 use crate::{
-	renderer_3d::{primitive::VertexData, light::Light},
+	renderer_3d::{VertexData, Light},
 	core::{Transform3D, Transformable}
 };
 

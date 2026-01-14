@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use glam::{Vec2, Vec3, Vec4, Mat4};
 use web_sys::{WebGlProgram, WebGlRenderingContext as GL};
 
-use crate::renderer_3d::light::{Light, apply_lights};
-use super::shader::{compile_shader, link_program};
+use crate::renderer_3d::{Light, apply_lights};
+use super::{compile_shader, link_program};
 
 #[derive(Clone, Debug)]
 pub enum Uniform {

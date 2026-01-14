@@ -1,8 +1,8 @@
 use glam::Vec3;
 use slotmap::SlotMap;
-use super::{light::{Light, LightType}, gizmo::GizmoRenderer};
+use super::{Light, LightType, GizmoRenderer};
 use crate::{
-	common::{mesh::Mesh, camera::Camera}, 
+	common::{Mesh, Camera}, 
 	core::{ObjectId, LightId, Transform3D},
 	Renderer
 };
