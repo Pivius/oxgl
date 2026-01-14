@@ -1,15 +1,56 @@
+//! Primitive Shape Generation
+//!
+//! Provides built-in geometric primitives with vertex data ready for rendering.
+//! Primitives can be generated with or without normal data for use with
+//! different material types.
+//!
+//! ## Examples
+//!
+//! ```
+//! use oxgl::renderer_3d::Primitive;
+//! use oxgl::common::{Mesh, material::presets};
+//! use glam::Vec3;
+//!
+//! // Create a lit cube
+//! let cube_data = Primitive::Cube.vertices_with_normals();
+//! let cube = Mesh::with_normals(&gl, &cube_data, presets::phong(&gl, Vec3::ONE));
+//!
+//! // Create an unlit quad
+//! let quad_vertices = Primitive::Quad.vertices();
+//! let quad = Mesh::new(&gl, &quad_vertices, presets::unlit(&gl, Vec3::ONE));
+//! ```
+//!
+
+/// Built-in geometric primitive shapes.
 pub enum Primitive {
 	Quad,
 	Triangle,
 	Cube,
 }
 
+/// Interleaved vertex data with position and normal attributes.
+///
+/// Used with [`Mesh::with_normals`](crate::common::Mesh::with_normals) to create
+/// meshes that support lighting calculations.
+///
+/// ## Data Layout
+///
+/// Each vertex consists of 6 floats:
+/// ```text
+/// [px, py, pz, nx, ny, nz, px, py, pz, nx, ny, nz, ...]
+/// ```
+///
 pub struct VertexData {
 	pub data: Vec<f32>,
 	pub vertex_count: i32,
 }
 
 impl Primitive {
+	/// Returns position-only vertex data.
+	///
+	/// Use this for unlit materials or when normals are not needed.
+	/// The returned array contains only position data (3 floats per vertex).
+	///
 	pub fn vertices(&self) -> Vec<f32> {
 		match self {
 			Primitive::Quad => vec![
@@ -42,6 +83,21 @@ impl Primitive {
 		}
 	}
 
+	
+	/// Returns vertex data with interleaved positions and normals.
+	///
+	/// Use this for lit materials that require normal vectors for lighting
+	/// calculations. Each vertex includes both position and normal data.
+	///
+	/// Accessing the raw data:
+	///
+	/// ```
+	/// use oxgl::renderer_3d::Primitive;
+	///
+	/// let data = Primitive::Cube.vertices_with_normals();
+	/// println!("Cube has {} vertices", data.vertex_count);
+	/// println!("Data size: {} floats", data.data.len());
+	/// ```
 	pub fn vertices_with_normals(&self) -> VertexData {
 		match self {
 			Primitive::Cube => {

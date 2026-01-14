@@ -4,8 +4,8 @@ use stylance::import_style;
 use glam::{Quat, Vec3};
 use oxgl::{
 	App, core::Transform3D, 
-	common::{material::presets, Mesh}, 
-	renderer_3d::{Light, Primitive, PostProcessStack, postprocessing::presets as pp_presets},
+	common::{material::presets, Mesh, PostProcessStack, postprocessing::presets as pp_presets}, 
+	renderer_3d::{Light, Primitive},
 };
 
 fn main() {

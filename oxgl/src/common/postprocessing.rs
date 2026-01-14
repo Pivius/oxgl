@@ -409,7 +409,7 @@ impl PostProcessStack {
 			.collect();
 
 		if enabled_effects.is_empty() {
-			self.blit_to_screen(gl, &self.scene_texture);
+			self.blit_to_screen(gl);
 		} else {
 			self.blit_texture(gl, &self.scene_texture, self.ping_pong.write_framebuffer());
 			self.ping_pong.swap();
@@ -477,7 +477,7 @@ impl PostProcessStack {
 		);
 	}
 
-	fn blit_to_screen(&self, gl: &GL, texture: &WebGlTexture) {
+	fn blit_to_screen(&self, gl: &GL) {
 		gl.bind_framebuffer(GL::READ_FRAMEBUFFER, Some(&self.scene_framebuffer));
 		gl.bind_framebuffer(GL::DRAW_FRAMEBUFFER, None);
 		gl.blit_framebuffer(

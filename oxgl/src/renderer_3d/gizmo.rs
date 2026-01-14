@@ -1,3 +1,26 @@
+//! Debug Gizmo Rendering
+//!
+//! Provides immediate-mode debug visualization primitives for 3D scenes.
+//!
+//! ## Examples
+//!
+//! ```
+//! use oxgl::renderer_3d::GizmoRenderer;
+//! use glam::Vec3;
+//!
+//! let gizmos = GizmoRenderer::new(&gl);
+//!
+//! // Draw coordinate axes at origin
+//! gizmos.axes(&gl, &camera, Vec3::ZERO, 1.0);
+//!
+//! // Draw a ground grid
+//! gizmos.grid(&gl, &camera, 10.0, 10, Vec3::new(0.3, 0.3, 0.3));
+//!
+//! // Visualize a bounding sphere
+//! gizmos.wire_sphere(&gl, &camera, object_pos, radius, Vec3::new(1.0, 1.0, 0.0));
+//! ```
+//!
+
 use glam::{Vec3, Mat4};
 use web_sys::{WebGlBuffer, WebGlProgram, WebGl2RenderingContext as GL};
 use std::cell::RefCell;
@@ -24,6 +47,12 @@ const GIZMO_FRAG: &str = r#"
 	}
 "#;
 
+/// Immediate-mode debug gizmo renderer.
+///
+/// Provides methods for drawing wireframe primitives useful for debugging
+/// and editor visualization. All gizmos are rendered as lines without
+/// depth writing by default.
+///
 pub struct GizmoRenderer {
 	program: WebGlProgram,
 	line_buffer: WebGlBuffer,
@@ -33,6 +62,15 @@ pub struct GizmoRenderer {
 }
 
 impl GizmoRenderer {
+	/// Creates a new gizmo renderer.
+	///
+	/// Compiles the gizmo shader and pre-generates cached primitive geometry.
+	///
+	/// # Panics
+	///
+	/// Panics if shader compilation fails. This should not happen with the
+	/// embedded shaders unless the WebGL context is invalid.
+	///
 	pub fn new(gl: &GL) -> Self {
 		let vert = compile_shader(gl, GIZMO_VERT, GL::VERTEX_SHADER).unwrap();
 		let frag = compile_shader(gl, GIZMO_FRAG, GL::FRAGMENT_SHADER).unwrap();
@@ -48,6 +86,10 @@ impl GizmoRenderer {
 		}
 	}
 
+	/// Generates unit sphere wireframe vertices.
+	///
+	/// Creates three orthogonal circles (XY, XZ, YZ planes) with the
+	/// specified number of segments each.
 	fn generate_sphere_vertices(segments: usize) -> Vec<f32> {
 		let mut vertices = Vec::with_capacity(segments * 6 * 6);
 		
@@ -76,6 +118,9 @@ impl GizmoRenderer {
 		vertices
 	}
 
+	/// Generates unit cube wireframe vertices.
+	///
+	/// Creates the 12 edges of a unit cube centered at origin.
 	fn generate_cube_vertices() -> Vec<f32> {
 		let h = 0.5;
 		vec![
@@ -133,6 +178,21 @@ impl GizmoRenderer {
 		}
 	}
 
+	/// Draws a single line segment.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use glam::Vec3;
+	///
+	/// // Draw a diagonal line
+	/// gizmos.line(
+	///		&gl, &camera,
+	///		Vec3::ZERO,
+	///		Vec3::new(1.0, 1.0, 1.0),
+	///		Vec3::new(1.0, 1.0, 1.0) // White
+	/// );
+	/// ```
 	pub fn line(&self, gl: &GL, camera: &Camera, from: Vec3, to: Vec3, color: Vec3) {
 		let vertices = [from.x, from.y, from.z, to.x, to.y, to.z];
 
@@ -141,6 +201,22 @@ impl GizmoRenderer {
 		gl.draw_arrays(GL::LINES, 0, 2);
 	}
 
+	/// Draws a directional arrow with an arrowhead.
+	///
+	/// The arrow starts at `origin` and points in `direction` with the
+	/// specified `length`. The arrowhead size is proportional to the length.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use glam::Vec3;
+	///
+	/// // Draw a velocity vector
+	/// gizmos.arrow(&gl, &camera, position, velocity.normalize(), velocity.length(), Vec3::new(0.0, 1.0, 0.0));
+	///
+	/// // Draw a direction indicator
+	/// gizmos.arrow(&gl, &camera, Vec3::ZERO, Vec3::Y, 2.0, Vec3::new(1.0, 1.0, 0.0));
+	/// ```
 	pub fn arrow(&self, gl: &GL, camera: &Camera, origin: Vec3, direction: Vec3, length: f32, color: Vec3) {
 		let dir = direction.normalize();
 		let end = origin + dir * length;
@@ -185,6 +261,18 @@ impl GizmoRenderer {
 		gl.draw_arrays(GL::LINES, 0, 10);
 	}
 
+	/// Draws a wireframe cube.
+	///
+	/// Renders the 12 edges of a cube centered at the given position.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use glam::Vec3;
+	///
+	/// // Draw bounding box
+	/// gizmos.wire_cube(&gl, &camera, object.position, object.bounds, Vec3::new(0.0, 1.0, 1.0));
+	/// ```
 	pub fn wire_cube(&self, gl: &GL, camera: &Camera, center: Vec3, size: f32, color: Vec3) {
 		self.upload_vertices(gl, &self.unit_cube_vertices);
 		let model = Mat4::from_scale_rotation_translation(
@@ -196,6 +284,22 @@ impl GizmoRenderer {
 		gl.draw_arrays(GL::LINES, 0, 24);
 	}
 
+	/// Draws a wireframe sphere.
+	///
+	/// Renders three orthogonal circles representing a sphere. This is a
+	/// lightweight approximation suitable for debugging.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use glam::Vec3;
+	///
+	/// // Draw collision sphere
+	/// gizmos.wire_sphere(&gl, &camera, entity.position, entity.collision_radius, Vec3::new(1.0, 0.0, 0.0));
+	///
+	/// // Draw light attenuation range
+	/// gizmos.wire_sphere(&gl, &camera, light.position, light.range, Vec3::new(1.0, 1.0, 0.0));
+	/// ```
 	pub fn wire_sphere(&self, gl: &GL, camera: &Camera, center: Vec3, radius: f32, color: Vec3) {
 		self.upload_vertices(gl, &self.unit_sphere_vertices);
 		let model = Mat4::from_scale_rotation_translation(
@@ -207,6 +311,23 @@ impl GizmoRenderer {
 		gl.draw_arrays(GL::LINES, 0, (24 * 6) as i32);
 	}
 
+	
+	/// Draws a ground plane grid.
+	///
+	/// Renders a square grid on the XZ plane (Y=0), useful for spatial
+	/// reference and scale visualization.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use glam::Vec3;
+	///
+	/// // 10x10 meter grid with 1 meter cells
+	/// gizmos.grid(&gl, &camera, 10.0, 10, Vec3::new(0.3, 0.3, 0.3));
+	///
+	/// // Fine grid for precise positioning
+	/// gizmos.grid(&gl, &camera, 5.0, 50, Vec3::new(0.2, 0.2, 0.2));
+	/// ```
 	pub fn grid(&self, gl: &GL, camera: &Camera, size: f32, divisions: u32, color: Vec3) {
 		let half = size * 0.5;
 		let step = size / divisions as f32;
@@ -227,6 +348,22 @@ impl GizmoRenderer {
 		gl.draw_arrays(GL::LINES, 0, ((divisions + 1) * 4) as i32);
 	}
 
+	/// Draws RGB coordinate axes.
+	///
+	/// Renders three arrows representing the X (red), Y (green), and Z (blue)
+	/// axes at the given position.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use glam::Vec3;
+	///
+	/// // World origin axes
+	/// gizmos.axes(&gl, &camera, Vec3::ZERO, 1.0);
+	///
+	/// // Object local axes
+	/// gizmos.axes(&gl, &camera, object.position, 0.5);
+	/// ```
 	pub fn axes(&self, gl: &GL, camera: &Camera, position: Vec3, size: f32) {
 		self.arrow(gl, camera, position, Vec3::X, size, Vec3::new(1.0, 0.0, 0.0));
 		self.arrow(gl, camera, position, Vec3::Y, size, Vec3::new(0.0, 1.0, 0.0));

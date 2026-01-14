@@ -1,3 +1,33 @@
+//! Scene Management
+//!
+//! Provides a container for 3D objects, lights, and rendering configuration.
+//! The scene handles object lifecycle, shadow mapping, and post-processing.
+//!
+//! ## Examples
+//!
+//! ```
+//! use oxgl::renderer_3d::{Scene, Light, LightType, Primitive};
+//! use oxgl::common::{Camera, Mesh, material::presets};
+//! use oxgl::core::Transform3D;
+//! use glam::Vec3;
+//!
+//! // Create a scene with a camera
+//! let camera = Camera::new(Vec3::new(3.0, 3.0, 3.0), Vec3::ZERO, 16.0 / 9.0);
+//! let mut scene = Scene::new(camera);
+//!
+//! // Add a cube
+//! let mesh = Mesh::with_normals(&gl, &Primitive::Cube.vertices_with_normals(), material);
+//! let cube_id = scene.add(mesh, Transform3D::new());
+//!
+//! // Add a light
+//! let light = Light::directional(Vec3::new(-1.0, -1.0, -1.0), Vec3::ONE, 1.0);
+//! scene.add_light(light);
+//!
+//! // Enable shadows
+//! scene.enable_shadows(&gl)?;
+//! ```
+//!
+
 use glam::{Vec3, Mat4};
 use slotmap::SlotMap;
 use web_sys::WebGl2RenderingContext as GL;
@@ -8,11 +38,28 @@ use crate::{
 	Renderer
 };
 
+/// A renderable object in the scene.
+///
+/// Combines a mesh with a transform to define both the geometry
+/// and its position/orientation/scale in world space.
 pub struct SceneObject {
 	pub mesh: Mesh,
 	pub transform: Transform3D,
 }
 
+/// Container for 3D objects, lights, and rendering state.
+///
+/// The scene manages:
+/// - Object and light storage with stable IDs
+/// - Shadow map generation
+/// - Post-processing pipeline
+/// - Camera configuration
+///
+/// ## Object Management
+///
+/// Objects and lights are stored in slot maps with stable IDs that remain
+/// valid even after other items are removed.
+///
 pub struct Scene {
 	pub camera: Camera,
 	pub objects: SlotMap<ObjectId, SceneObject>,
@@ -23,6 +70,15 @@ pub struct Scene {
 	pub post_process: Option<PostProcessStack>,
 }
 
+/// Configuration for debug visualization.
+///
+/// Controls which debug gizmos are rendered when calling
+/// [`Scene::render_debug`].
+///
+/// ## Defaults
+///
+/// All visualization options are disabled by default.
+///
 pub struct DebugSettings {
 	pub show_grid: bool,
 	pub show_axes: bool,
@@ -46,6 +102,18 @@ impl Default for DebugSettings {
 }
 
 impl Scene {
+	/// Creates a new empty scene with the given camera.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use oxgl::renderer_3d::Scene;
+	/// use oxgl::common::Camera;
+	/// use glam::Vec3;
+	///
+	/// let camera = Camera::new(Vec3::new(0.0, 5.0, 10.0), Vec3::ZERO, 16.0 / 9.0);
+	/// let scene = Scene::new(camera);
+	/// ```
 	pub fn new(camera: Camera) -> Self {
 		Self { 
 			camera, 
@@ -82,6 +150,27 @@ impl Scene {
 		self.lights.get_mut(id)
 	}
 
+	/// Enables shadow mapping for the scene.
+	///
+	/// Creates the shadow map framebuffer and compiles the shadow depth shader.
+	/// Shadows will be cast from the first light with `cast_shadows` enabled.
+	///
+	/// # Errors
+	///
+	/// Returns an error if:
+	/// - Shadow map framebuffer creation fails
+	/// - Shadow shader compilation fails
+	///
+	/// # Examples
+	///
+	/// ```
+	/// scene.enable_shadows(&gl)?;
+	///
+	/// // Make a light cast shadows
+	/// let mut light = Light::directional(Vec3::new(-1.0, -1.0, -1.0), Vec3::ONE, 1.0);
+	/// light.cast_shadows = true;
+	/// scene.add_light(light);
+	/// ```
 	pub fn enable_shadows(&mut self, gl: &GL) -> Result<(), String> {
 		self.shadow_map = Some(ShadowMap::new(gl)?);
 		self.shadows_enabled = true;
@@ -93,14 +182,22 @@ impl Scene {
 		Ok(())
 	}
 
+	/// Disables shadow rendering.
+	///
+	/// Shadows will no longer be rendered, but the shadow map resources
+	/// are retained for quick re-enabling.
 	pub fn disable_shadows(&mut self) {
 		self.shadows_enabled = false;
 	}
 
+	/// Checks if any light in the scene casts shadows.
 	fn has_shadow_casting_light(&self) -> bool {
 		self.lights.values().any(|l| l.cast_shadows)
 	}
 
+	/// Renders the shadow depth pass.
+	///
+	/// Renders all objects from the light's perspective into the shadow map.
 	fn render_shadow_pass(&mut self, gl: &GL, canvas_width: i32, canvas_height: i32) {
 		if !self.shadows_enabled || !self.has_shadow_casting_light() {
 			return;
@@ -159,10 +256,38 @@ impl Scene {
 		shadow_map.unbind(gl, canvas_width, canvas_height);
 	}
 
+	/// Sets the post-processing effect stack.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use oxgl::common::{PostProcessStack, pp_presets};
+	///
+	/// let mut pp = PostProcessStack::new(&gl, 800, 600)?;
+	/// pp.push(pp_presets::vignette(&gl, 0.8, 0.4));
+	/// pp.push(pp_presets::chromatic_aberration(&gl, 5.0));
+	///
+	/// scene.set_post_process(pp);
+	/// ```
 	pub fn set_post_process(&mut self, stack: PostProcessStack) {
 		self.post_process = Some(stack);
 	}
 
+	/// Renders the scene.
+	///
+	/// Executes the full rendering pipeline:
+	/// 1. Binds post-process framebuffer (if enabled)
+	/// 2. Clears color and depth buffers
+	/// 3. Renders shadow pass (if enabled)
+	/// 4. Renders all objects with lighting
+	/// 5. Applies post-processing effects (if enabled)
+	///
+	/// # Examples
+	///
+	/// ```
+	/// // In your render loop
+	/// scene.render(&renderer, elapsed_time);
+	/// ```
 	pub fn render(&mut self, renderer: &Renderer, time: f32) {
 		let gl = &renderer.gl;
 		let canvas = renderer.canvas();
@@ -231,6 +356,27 @@ impl Scene {
 		}
 	}
 
+	/// Renders debug visualization gizmos.
+	///
+	/// Draws wireframe debug primitives based on the provided settings.
+	/// Should be called after [`render`](Self::render) for proper layering.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use oxgl::renderer_3d::{GizmoRenderer, DebugSettings};
+	///
+	/// let gizmos = GizmoRenderer::new(&gl);
+	/// let settings = DebugSettings {
+	///		show_grid: true,
+	///		show_axes: true,
+	///		show_light_gizmos: true,
+	///		..Default::default()
+	/// };
+	///
+	/// scene.render(&renderer, time);
+	/// scene.render_debug(&renderer, &gizmos, &settings, true);
+	/// ```
 	pub fn render_debug(&self, renderer: &Renderer, gizmos: &GizmoRenderer, settings: &DebugSettings, disable_depth: bool) {
 		let gl = &renderer.gl;
 
