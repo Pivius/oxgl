@@ -57,7 +57,16 @@ fn Canvas() -> impl IntoView {
 				&Primitive::Cube.vertices_with_normals(),
 				presets::phong(&app.renderer.gl, Vec3::new(0.4, 0.8, 0.4))
 			),
-			Transform3D::new().with_position(Vec3::new(0.0, 0.5, 0.0))
+			Transform3D::new().with_position(Vec3::new(2.0, 0.5, 0.0))
+		);
+
+		let teapot = app.scene.borrow_mut().add(
+			Mesh::from_obj(
+				&app.renderer.gl,
+				include_str!("./teapot.obj"),
+				presets::phong(&app.renderer.gl, Vec3::new(0.8, 0.4, 0.4))
+			).unwrap().remove(0),
+			Transform3D::new().with_position(Vec3::new(0.0, 0.0, 0.0)).with_scale(Vec3::splat(0.5))
 		);
 
 		app.run(move |scene, time| {

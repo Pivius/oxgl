@@ -86,6 +86,16 @@ impl Material {
 	}
 }
 
+impl Clone for Material {
+	fn clone(&self) -> Self {
+		Self {
+			program: self.program.clone(),
+			uniforms: self.uniforms.clone(),
+			needs_normals: self.needs_normals,
+		}
+	}
+}
+
 pub struct MaterialBuilder<'a> {
 	gl: &'a GL,
 	vert_src: &'a str,

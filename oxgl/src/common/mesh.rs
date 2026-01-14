@@ -1,6 +1,6 @@
 use web_sys::{WebGlBuffer, WebGlRenderingContext as GL};
 
-use super::{camera::Camera, material::Material};
+use super::{camera::Camera, material::Material, loader::MeshData};
 use crate::{
 	renderer_3d::{primitive::VertexData, light::Light},
 	core::{Transform3D, Transformable}
@@ -36,6 +36,25 @@ impl Mesh {
 			has_normals: false,
 			material,
 		}
+	}
+
+	pub fn from_data(gl: &GL, data: &MeshData, material: Material) -> Self {
+		let vertices = data.interleaved_vertices();
+		let vertex_data = VertexData {
+			data: vertices,
+			vertex_count: data.positions.len() as i32 / 3,
+		};
+
+		Self::with_normals(gl, &vertex_data, material)
+	}
+
+	pub fn from_obj(gl: &GL, obj_content: &str, material: Material) -> Result<Vec<Self>, String> {
+		let mesh_data = MeshData::from_obj(obj_content)?;
+
+		Ok(mesh_data
+			.iter()
+			.map(|data| Self::from_data(gl, data, material.clone()))
+			.collect())
 	}
 
 	pub fn with_normals(gl: &GL, data: &VertexData, material: Material) -> Self {
