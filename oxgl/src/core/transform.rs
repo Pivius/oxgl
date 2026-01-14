@@ -3,7 +3,7 @@
 //! Provides position, rotation, and scale transformations for 3D objects.
 //!
 
-use glam::{Mat4, Quat, Vec2, Vec3};
+use glam::{Mat4, Quat, Vec3};
 
 /// Trait for types that can be transformed in 3D space.
 pub trait Transformable<V, M> {

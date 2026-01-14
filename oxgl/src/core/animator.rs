@@ -1,6 +1,24 @@
+//! Browser Animation Loop
+//!
+//! Provides a wrapper around `requestAnimationFrame` for smooth rendering loops.
+//!
+
 use std::{cell::RefCell, rc::Rc};
 use web_sys::wasm_bindgen::prelude::{Closure, JsCast};
 
+/// Browser animation frame loop manager.
+///
+/// Wraps `requestAnimationFrame` to provide a consistent render loop
+/// with elapsed time tracking.
+///
+/// ## Examples
+///
+/// ```ignore
+/// Animator::start(|time| {
+///		// time is seconds since start
+///		println!("Frame at {} seconds", time);
+/// });
+/// ```
 pub struct Animator {
 	running: Rc<RefCell<bool>>,
 }
