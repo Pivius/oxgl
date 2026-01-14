@@ -1,5 +1,5 @@
 use glam::{Vec3, Mat4};
-use web_sys::{WebGlBuffer, WebGlProgram, WebGlRenderingContext as GL};
+use web_sys::{WebGlBuffer, WebGlProgram, WebGl2RenderingContext as GL};
 use std::cell::RefCell;
 
 use crate::common::{compile_shader, link_program, Camera};

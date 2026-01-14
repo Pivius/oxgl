@@ -1,4 +1,4 @@
-use web_sys::{WebGlBuffer, WebGlRenderingContext as GL};
+use web_sys::{WebGlBuffer, WebGlProgram, WebGl2RenderingContext as GL};
 
 use super::{Camera, Material, MeshData};
 use crate::{
@@ -80,6 +80,21 @@ impl Mesh {
 		}
 	}
 
+	pub fn draw_depth_only(&self, gl: &GL, program: &WebGlProgram) {
+		gl.bind_buffer(GL::ARRAY_BUFFER, Some(&self.vertex_buffer));
+
+		let pos_loc = gl.get_attrib_location(program, "position");
+
+		if pos_loc >= 0 {
+			gl.enable_vertex_attrib_array(pos_loc as u32);
+			gl.vertex_attrib_pointer_with_i32(
+				pos_loc as u32, 3, GL::FLOAT, false, self.stride, 0
+			);
+		}
+
+		gl.draw_arrays(GL::TRIANGLES, 0, self.vertex_count);
+	}
+
 	pub fn draw(&self, gl: &GL, transform: &Transform3D, camera: &Camera, lights: &[Light]) {
 		let program = self.material.program();
 
@@ -101,7 +116,6 @@ impl Mesh {
 				Some(&loc), false, &camera.projection_matrix().to_cols_array()
 			);
 		}
-		// specular calculations
 		if let Some(loc) = gl.get_uniform_location(program, "cameraPosition") {
 			gl.uniform3fv_with_f32_array(
 				Some(&loc), &camera.position.to_array()

@@ -8,12 +8,16 @@ repository = "https://github.com/Pivius/oxgl"
 
 [dependencies]
 glam = "0.30.10"
+js-sys = "0.3.83"
 log = "0.4.29"
 slotmap = "1.1.1"
 web-sys = { version = "0.3.83", features = [
-	"WebGlRenderingContext",
+	"WebGl2RenderingContext",
 	"WebGlUniformLocation",
 	"WebGlBuffer",
 	"WebGlProgram",
 	"WebGlShader",
+	"WebGlFramebuffer",
+	"WebGlRenderbuffer",
+	"WebGlTexture"
 ] }

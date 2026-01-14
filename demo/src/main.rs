@@ -41,14 +41,29 @@ fn Canvas() -> impl IntoView {
 			debug.grid_size = 10.0;
 			debug.grid_divisions = 10;
 		}
-
+		let _ = app.scene.borrow_mut().enable_shadows(&app.renderer.gl);
 		let point_light_id = app.scene.borrow_mut().add_light(
 			Light::point(
 				Vec3::new(2.0, 1.0, 0.0),
 				Vec3::new(1.0, 0.5, 0.0),
 				3.0,
-				5.0
-			)
+				20.0
+			).with_shadows(true)
+		);
+
+		let point_light_id2 = app.scene.borrow_mut().add_light(
+			Light::point(
+				Vec3::new(-2.0, 1.0, 0.0),
+				Vec3::new(0.0, 0.5, 1.0),
+				3.0,
+				20.0
+			).with_shadows(true)
+		);
+
+		let ground = app.scene.borrow_mut().add(
+			Mesh::with_normals(&app.renderer.gl, &Primitive::Quad.vertices_with_normals(), 
+				presets::phong(&app.renderer.gl, Vec3::new(0.5, 0.5, 0.5))),
+			Transform3D::new().with_scale(Vec3::splat(10.0)).with_rotation(Quat::from_rotation_x(-90f32.to_radians()))
 		);
 
 		let cube = app.scene.borrow_mut().add(

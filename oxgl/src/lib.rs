@@ -4,9 +4,9 @@ pub mod renderer_3d;
 
 use std::{cell::RefCell, rc::Rc};
 use glam::Vec3;
-use web_sys::{HtmlCanvasElement, WebGlRenderingContext as GL, wasm_bindgen::JsCast};
+use web_sys::{HtmlCanvasElement, WebGl2RenderingContext as GL, wasm_bindgen::JsCast};
 
-use crate::{renderer_3d::{scene::Scene, gizmo::GizmoRenderer}, common::camera::Camera, core::Animator};
+use crate::{renderer_3d::{Scene, GizmoRenderer}, common::Camera, core::Animator};
 
 pub struct Renderer {
 	pub gl: GL,
@@ -24,7 +24,7 @@ impl Renderer {
 			.expect("Not a canvas");
 
 		let gl = canvas
-			.get_context("webgl")
+			.get_context("webgl2")
 			.unwrap()
 			.unwrap()
 			.dyn_into::<GL>()
@@ -33,6 +33,10 @@ impl Renderer {
 		gl.enable(GL::DEPTH_TEST);
 
 		Self { gl, canvas }
+	}
+
+	pub fn canvas(&self) -> &HtmlCanvasElement {
+		&self.canvas
 	}
 
 	pub fn clear(&self) {

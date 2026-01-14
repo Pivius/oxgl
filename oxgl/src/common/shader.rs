@@ -1,4 +1,4 @@
-use web_sys::{WebGlProgram, WebGlRenderingContext as GL, WebGlShader};
+use web_sys::{WebGlProgram, WebGl2RenderingContext as GL, WebGlShader};
 
 pub fn compile_shader(gl: &GL, source: &str, shader_type: u32) -> Result<WebGlShader, String> {
 	let shader = gl.create_shader(shader_type).ok_or("Unable to create shader")?;

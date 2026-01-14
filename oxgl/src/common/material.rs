@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use glam::{Vec2, Vec3, Vec4, Mat4};
-use web_sys::{WebGlProgram, WebGlRenderingContext as GL};
+use web_sys::{WebGlProgram, WebGl2RenderingContext as GL};
 
 use crate::renderer_3d::{Light, apply_lights};
 use super::{compile_shader, link_program};
@@ -149,7 +149,7 @@ impl<'a> MaterialBuilder<'a> {
 pub mod presets {
 	use super::*;
 	use glam::{Vec3, Vec4};
-	use web_sys::WebGlRenderingContext as GL;
+	use web_sys::WebGl2RenderingContext as GL;
 
 	const UNLIT_VERT: &str = include_str!("../shaders/unlit.vert");
 	const UNLIT_FRAG: &str = include_str!("../shaders/unlit.frag");
@@ -157,6 +157,7 @@ pub mod presets {
 	const LAMBERT_FRAG: &str = include_str!("../shaders/lambert.frag");
 	const PHONG_VERT: &str = include_str!("../shaders/phong.vert");
 	const PHONG_FRAG: &str = include_str!("../shaders/phong.frag");
+
 	pub fn unlit(gl: &GL, color: Vec4) -> Material {
 		MaterialBuilder::new(gl, UNLIT_VERT, UNLIT_FRAG)
 			.color4(color.x, color.y, color.z, color.w)

@@ -1,5 +1,5 @@
 use glam::Vec3;
-use web_sys::{WebGlProgram, WebGlRenderingContext as GL};
+use web_sys::{WebGlProgram, WebGl2RenderingContext as GL};
 
 #[derive(Clone, Debug)]
 pub enum LightType {
@@ -15,6 +15,7 @@ pub struct Light {
 	pub direction: Vec3,
 	pub color: Vec3,
 	pub intensity: f32,
+	pub cast_shadows: bool,
 }
 
 impl Light {
@@ -25,6 +26,7 @@ impl Light {
 			direction: direction.normalize(),
 			color,
 			intensity,
+			cast_shadows: false,
 		}
 	}
 
@@ -35,6 +37,7 @@ impl Light {
 			direction: Vec3::ZERO,
 			color,
 			intensity,
+			cast_shadows: false,
 		}
 	}
 
@@ -45,6 +48,7 @@ impl Light {
 			direction: direction.normalize(),
 			color,
 			intensity,
+			cast_shadows: false,
 		}
 	}
 
@@ -61,6 +65,11 @@ impl Light {
 			LightType::Point { radius } => radius,
 			_ => 0.0,
 		}
+	}
+
+	pub fn with_shadows(mut self, cast: bool) -> Self {
+		self.cast_shadows = cast;
+		self
 	}
 
 	pub fn apply_uniforms(&self, gl: &GL, program: &WebGlProgram) {
