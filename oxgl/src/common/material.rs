@@ -1,3 +1,9 @@
+//! Material and Shader Uniform Management
+//!
+//! Provides material types that combine shader programs with uniform values,
+//! along with a builder pattern for easy material creation.
+//!
+
 use std::collections::HashMap;
 use glam::{Vec2, Vec3, Vec4, Mat4};
 use web_sys::{WebGlProgram, WebGl2RenderingContext as GL};
@@ -5,6 +11,9 @@ use web_sys::{WebGlProgram, WebGl2RenderingContext as GL};
 use crate::renderer_3d::{Light, apply_lights};
 use super::{compile_shader, link_program};
 
+/// Represents a shader uniform value.
+///
+/// Supports common GLSL uniform types.
 #[derive(Clone, Debug)]
 pub enum Uniform {
 	Float(f32),
@@ -12,9 +21,11 @@ pub enum Uniform {
 	Vec3(Vec3),
 	Vec4(Vec4),
 	Mat4(Mat4),
+	Int(i32),
 }
 
 impl Uniform {
+	/// Uploads the uniform value to the GPU.
 	pub fn apply(&self, gl: &GL, location: &web_sys::WebGlUniformLocation) {
 		match self {
 			Uniform::Float(v) => gl.uniform1f(Some(location), *v),
@@ -22,10 +33,30 @@ impl Uniform {
 			Uniform::Vec3(v) => gl.uniform3fv_with_f32_array(Some(location), &v.to_array()),
 			Uniform::Vec4(v) => gl.uniform4fv_with_f32_array(Some(location), &v.to_array()),
 			Uniform::Mat4(v) => gl.uniform_matrix4fv_with_f32_array(Some(location), false, &v.to_cols_array()),
+			Uniform::Int(v) => gl.uniform1i(Some(location), *v),
 		}
 	}
 }
 
+/// A material consisting of a shader program and uniform values.
+///
+/// Materials define how a mesh is rendered, including its shader
+/// and any configurable parameters like color, shininess, etc.
+///
+/// ## Examples
+///
+/// ```ignore
+/// use oxgl::common::material::presets;
+///
+/// // Use a preset material
+/// let phong = presets::phong(&gl, Vec3::new(1.0, 0.0, 0.0));
+///
+/// // Or build a custom material
+/// let custom = MaterialBuilder::new(&gl, vert_src, frag_src)
+///     .color3(1.0, 0.5, 0.0)
+///     .shininess(64.0)
+///     .build();
+/// ```
 pub struct Material {
 	program: WebGlProgram,
 	uniforms: HashMap<String, Uniform>,
@@ -33,6 +64,11 @@ pub struct Material {
 }
 
 impl Material {
+	/// Creates a material from shader source code.
+	///
+	/// ## Errors
+	///
+	/// Returns an error string if shader compilation or linking fails.
 	pub fn from_source(gl: &GL, vert_src: &str, frag_src: &str) -> Result<Self, String> {
 		let vert_shader = compile_shader(gl, vert_src, GL::VERTEX_SHADER)?;
 		let frag_shader = compile_shader(gl, frag_src, GL::FRAGMENT_SHADER)?;
@@ -75,6 +111,7 @@ impl Material {
 		&self.program
 	}
 
+	/// Uploads all uniforms and applies lighting.
 	pub fn apply(&self, gl: &GL, lights: &[Light]) {
 		for (name, value) in &self.uniforms {
 			if let Some(loc) = gl.get_uniform_location(&self.program, name) {
@@ -96,6 +133,18 @@ impl Clone for Material {
 	}
 }
 
+/// Builder for creating materials with a fluent API.
+///
+/// ## Examples
+///
+/// ```ignore
+/// let material = MaterialBuilder::new(&gl, vert_src, frag_src)
+///     .color3(1.0, 0.0, 0.0)
+///     .ambient(0.1)
+///     .shininess(32.0)
+///     .specular(0.5)
+///     .build();
+/// ```
 pub struct MaterialBuilder<'a> {
 	gl: &'a GL,
 	vert_src: &'a str,
@@ -104,6 +153,7 @@ pub struct MaterialBuilder<'a> {
 }
 
 impl<'a> MaterialBuilder<'a> {
+	/// Creates a new material builder with shader sources.
 	pub fn new(gl: &'a GL, vert_src: &'a str, frag_src: &'a str) -> Self {
 		Self {
 			gl,
@@ -113,6 +163,7 @@ impl<'a> MaterialBuilder<'a> {
 		}
 	}
 
+	/// Sets a custom uniform value.
 	pub fn uniform(mut self, name: &str, value: Uniform) -> Self {
 		self.uniforms.insert(name.to_string(), value);
 		self
@@ -138,6 +189,11 @@ impl<'a> MaterialBuilder<'a> {
 		self.uniform("specularStrength", Uniform::Float(v))
 	}
 
+	/// Builds the material.
+	///
+	/// ## Panics
+	///
+	/// Panics if shader compilation fails.
 	pub fn build(self) -> Material {
 		let mut mat = Material::from_source(self.gl, self.vert_src, self.frag_src)
 			.expect("Failed to compile shader");
@@ -146,6 +202,7 @@ impl<'a> MaterialBuilder<'a> {
 	}
 }
 
+/// Preset materials for common use cases.
 pub mod presets {
 	use super::*;
 	use glam::{Vec3, Vec4};

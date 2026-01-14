@@ -1,9 +1,9 @@
 use glam::{Vec3, Mat4};
 use slotmap::SlotMap;
 use web_sys::WebGl2RenderingContext as GL;
-use super::{Light, LightType, GizmoRenderer, ShadowMap, PostProcessStack};
+use super::{Light, LightType, GizmoRenderer, ShadowMap};
 use crate::{
-	common::{Mesh, Camera, Material}, 
+	common::{Mesh, Camera, Material, PostProcessStack}, 
 	core::{ObjectId, LightId, Transform3D, Transformable},
 	Renderer
 };

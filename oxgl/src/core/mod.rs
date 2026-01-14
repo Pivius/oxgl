@@ -1,14 +1,6 @@
 //! Core Types and Utilities
 //!
-//! This module provides fundamental types used throughout the library including
-//! transforms, object identifiers, animation utilities, and color helpers.
-//!
-//! ## Types
-//!
-//! - [`Transform3D`]: Position, rotation, and scale for 3D objects
-//! - [`ObjectId`] / [`LightId`]: Type-safe identifiers for scene objects
-//! - [`Color`]: Color conversion utilities
-//! - [`Animator`]: Browser animation frame loop wrapper
+//! This module provides fundamental types used throughout the library.
 //!
 
 pub mod transform;

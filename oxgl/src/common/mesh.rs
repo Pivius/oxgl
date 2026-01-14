@@ -1,3 +1,27 @@
+//! Mesh Management
+//!
+//! Provides mesh creation and rendering functionality for 3D objects.
+//! Meshes combine vertex data with materials and handle GPU buffer management.
+//!
+//! ## Examples
+//!
+//! ```
+//! use oxgl::common::{Mesh, material::presets};
+//! use oxgl::renderer_3d::Primitive;
+//! use glam::Vec3;
+//!
+//! // Create a cube mesh with a phong material
+//! let mesh = Mesh::with_normals(
+//!		&gl,
+//!		&Primitive::Cube.vertices_with_normals(),
+//!		presets::phong(&gl, Vec3::new(0.8, 0.2, 0.2))
+//! );
+//!
+//! // Load from OBJ file
+//! let meshes = Mesh::from_obj(&gl, obj_content, material).unwrap();
+//! ```
+//!
+
 use web_sys::{WebGlBuffer, WebGlProgram, WebGl2RenderingContext as GL};
 
 use super::{Camera, Material, MeshData};
@@ -6,6 +30,23 @@ use crate::{
 	core::{Transform3D, Transformable}
 };
 
+/// A renderable 3D mesh with associated material.
+///
+/// Manages vertex buffer data on the GPU and provides methods for rendering
+/// with lighting and camera transforms. Supports meshes with or without normals.
+///
+/// ## Construction
+///
+/// - [`Mesh::new`] - Basic mesh with position-only vertices
+/// - [`Mesh::with_normals`] - Mesh with interleaved position and normal data
+/// - [`Mesh::from_data`] - From [`MeshData`] struct
+/// - [`Mesh::from_obj`] - Parse from OBJ file content
+///
+/// ## Rendering
+///
+/// - [`Mesh::draw`] - Full render with material, lighting, and transforms
+/// - [`Mesh::draw_depth_only`] - Depth-only render for shadow passes
+///
 pub struct Mesh {
 	vertex_buffer: WebGlBuffer,
 	vertex_count: i32,
@@ -15,6 +56,24 @@ pub struct Mesh {
 }
 
 impl Mesh {
+	/// Creates a new mesh with position-only vertex data.
+	///
+	/// Use this for simple meshes that don't require lighting calculations.
+	/// For lit meshes, use [`Mesh::with_normals`] instead.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use oxgl::common::Mesh;
+	///
+	/// let vertices = [
+	///		0.0, 0.0, 0.0, // vertex 1
+	///		1.0, 0.0, 0.0, // vertex 2
+	///		0.5, 1.0, 0.0, // vertex 3
+	/// ];
+	///
+	/// let mesh = Mesh::new(&gl, &vertices, material);
+	/// ```
 	pub fn new(gl: &GL, vertices: &[f32], material: Material) -> Self {
 		let vertex_buffer = gl.create_buffer().expect("Failed to create buffer");
 
@@ -38,6 +97,23 @@ impl Mesh {
 		}
 	}
 
+	/// Creates a mesh from [`MeshData`].
+	///
+	/// Converts the mesh data to interleaved vertex format with normals.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use oxgl::common::{Mesh, MeshData};
+	///
+	/// let data = MeshData {
+	///		positions: vec![0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.5, 1.0, 0.0],
+	///		normals: vec![0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0],
+	///		indices: vec![0, 1, 2],
+	/// };
+	///
+	/// let mesh = Mesh::from_data(&gl, &data, material);
+	/// ```
 	pub fn from_data(gl: &GL, data: &MeshData, material: Material) -> Self {
 		let vertices = data.interleaved_vertices();
 		let vertex_data = VertexData {
@@ -48,6 +124,27 @@ impl Mesh {
 		Self::with_normals(gl, &vertex_data, material)
 	}
 
+	/// Creates meshes from OBJ file content.
+	///
+	/// Parses the OBJ content and creates a mesh for each object/group found.
+	/// All meshes share the same material.
+	///
+	/// # Errors
+	///
+	/// Returns an error string if the OBJ content is malformed or cannot be parsed.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use oxgl::common::Mesh;
+	///
+	/// let obj_content = include_str!("model.obj");
+	/// let meshes = Mesh::from_obj(&gl, obj_content, material)?;
+	///
+	/// for mesh in meshes {
+	///		// Add each mesh to the scene
+	/// }
+	/// ```
 	pub fn from_obj(gl: &GL, obj_content: &str, material: Material) -> Result<Vec<Self>, String> {
 		let mesh_data = MeshData::from_obj(obj_content)?;
 
@@ -57,6 +154,21 @@ impl Mesh {
 			.collect())
 	}
 
+	/// Creates a mesh with interleaved position and normal data.
+	///
+	/// This is the preferred constructor for meshes that will be rendered
+	/// with lighting.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use oxgl::common::Mesh;
+	/// use oxgl::renderer_3d::Primitive;
+	///
+	/// // Using a primitive helper
+	/// let cube_data = Primitive::Cube.vertices_with_normals();
+	/// let mesh = Mesh::with_normals(&gl, &cube_data, material);
+	/// ```
 	pub fn with_normals(gl: &GL, data: &VertexData, material: Material) -> Self {
 		let vertex_buffer = gl.create_buffer().expect("Failed to create buffer");
 
@@ -80,6 +192,21 @@ impl Mesh {
 		}
 	}
 
+	/// Renders the mesh for depth-only passes.
+	///
+	/// Used for shadow map generation where only depth information is needed.
+	/// Does not apply material uniforms or lighting calculations.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// // During shadow pass
+	/// gl.use_program(Some(&shadow_program));
+	/// 
+	/// // Set light space matrix uniform...
+	/// 
+	/// mesh.draw_depth_only(&gl, &shadow_program);
+	/// ```
 	pub fn draw_depth_only(&self, gl: &GL, program: &WebGlProgram) {
 		gl.bind_buffer(GL::ARRAY_BUFFER, Some(&self.vertex_buffer));
 
@@ -95,6 +222,22 @@ impl Mesh {
 		gl.draw_arrays(GL::TRIANGLES, 0, self.vertex_count);
 	}
 
+	/// Renders the mesh with full material and lighting.
+	///
+	/// Applies the mesh's material, sets up model/view/projection matrices,
+	/// binds vertex attributes, and issues the draw call.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use oxgl::core::Transform3D;
+	/// use glam::Vec3;
+	///
+	/// let transform = Transform3D::new()
+	///     .with_position(Vec3::new(0.0, 1.0, 0.0));
+	///
+	/// mesh.draw(&gl, &transform, &camera, &lights);
+	/// ```
 	pub fn draw(&self, gl: &GL, transform: &Transform3D, camera: &Camera, lights: &[Light]) {
 		let program = self.material.program();
 

@@ -24,31 +24,17 @@
 //!
 //! // Add a cube to the scene
 //! let cube = app.scene.borrow_mut().add(
-//!     Mesh::with_normals(&app.renderer.gl, &Primitive::Cube.vertices_with_normals(),
-//!         presets::phong(&app.renderer.gl, Vec3::new(0.4, 0.8, 0.4))),
-//!     Transform3D::new().with_position(Vec3::new(0.0, 0.5, 0.0))
+//!		Mesh::with_normals(&app.renderer.gl, &Primitive::Cube.vertices_with_normals(),
+//!			presets::phong(&app.renderer.gl, Vec3::new(0.4, 0.8, 0.4))),
+//!		Transform3D::new().with_position(Vec3::new(0.0, 0.5, 0.0))
 //! );
 //!
 //! // Run the render loop
 //! app.run(|scene, time| {
-//!     // Update scene here
+//!		// Update scene here
 //! });
 //! ```
-//!
-//! ## Features
-//!
-//! - **3D Rendering**: Meshes, materials, and primitives
-//! - **Lighting**: Point, directional, and spot lights with shadow mapping
-//! - **Post-Processing**: Vignette, chromatic aberration, film grain, blur, and more
-//! - **Debug Gizmos**: Grid, axes, wireframes, and light visualizations
-//! - **OBJ Loading**: Import 3D models from OBJ files
-//!
-//! ## Modules
-//!
-//! - [`core`]: Core types like transforms, IDs, and animation
-//! - [`common`]: Shared types like cameras, materials, meshes, and shaders
-//! - [`renderer_3d`]: 3D rendering including scenes, lights, shadows, and post-processing
-//!
+//! 
 //! ## License
 //!
 //! MIT License

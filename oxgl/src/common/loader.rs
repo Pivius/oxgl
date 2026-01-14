@@ -1,5 +1,35 @@
+//! Mesh Data Loading and Parsing
+//!
+//! Provides utilities for loading 3D mesh data from various file formats.
+//! Currently supports OBJ file parsing with automatic normal computation.
+//!
+//! ## Examples
+//!
+//! ```
+//! use oxgl::common::MeshData;
+//!
+//! let obj_content = include_str!("model.obj");
+//! let meshes = MeshData::from_obj(obj_content)?;
+//!
+//! for mesh in meshes {
+//!		let interleaved = mesh.interleaved_vertices();
+//!		// Use with Mesh::with_normals...
+//! }
+//! ```
+//!
+
 use glam::Vec3;
 
+/// Raw mesh data containing vertex attributes.
+///
+/// Stores position, normal, and UV data in separate flat arrays.
+/// Can be loaded from OBJ files or constructed manually.
+///
+/// ## Construction
+///
+/// - [`MeshData::from_obj`] - Parse from OBJ file content
+/// - [`MeshData::default`] - Create empty mesh data
+///
 #[derive(Clone, Debug, Default)]
 pub struct MeshData {
 	pub positions: Vec<f32>,
@@ -8,6 +38,27 @@ pub struct MeshData {
 }
 
 impl MeshData {
+	/// Parses mesh data from OBJ file content.
+	///
+	/// If the OBJ file doesn't contain normals, they are computed automatically
+	/// using face normals.
+	///
+	/// # Errors
+	///
+	/// Returns an error if the OBJ content is malformed. Currently this is
+	/// lenient and will skip malformed lines rather than failing.
+	///
+	/// # Examples
+	///
+	/// Loading from an embedded file:
+	///
+	/// ```
+	/// use oxgl::common::MeshData;
+	///
+	/// let obj_content = include_str!("assets/cube.obj");
+	/// let meshes = MeshData::from_obj(obj_content)?;
+	/// ```
+	///
 	pub fn from_obj(content: &str) -> Result<Vec<MeshData>, String> {
 		let mut positions: Vec<Vec3> = Vec::new();
 		let mut normals: Vec<Vec3> = Vec::new();
@@ -95,7 +146,33 @@ impl MeshData {
 		}])
 	}
 
-
+	/// Converts the mesh data to interleaved vertex format.
+	///
+	/// Produces a flat array with interleaved position and normal data:
+	/// `[px, py, pz, nx, ny, nz, px, py, pz, nx, ny, nz, ...]`
+	///
+	/// This format is suitable for use with [`Mesh::with_normals`](crate::common::Mesh::with_normals).
+	///
+	/// # Returns
+	///
+	/// A flat `Vec<f32>` with 6 floats per vertex (3 position + 3 normal).
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use oxgl::common::{MeshData, Mesh};
+	/// use oxgl::renderer_3d::VertexData;
+	///
+	/// let mesh_data = MeshData::from_obj(obj_content)?[0].clone();
+	/// let interleaved = mesh_data.interleaved_vertices();
+	///
+	/// let vertex_data = VertexData {
+	///		data: interleaved,
+	///		vertex_count: (mesh_data.positions.len() / 3) as i32,
+	/// };
+	///
+	/// let mesh = Mesh::with_normals(&gl, &vertex_data, material);
+	/// ```
 	pub fn interleaved_vertices(&self) -> Vec<f32> {
 		let vertex_count = self.positions.len() / 3;
 		let mut result = Vec::with_capacity(vertex_count * 6);
@@ -120,6 +197,10 @@ impl MeshData {
 	}
 }
 
+/// Parses a single face vertex definition from OBJ format.
+///
+/// Returns tuple of (position_index, texture_index, normal_index).
+/// Indices are converted from 1-based (OBJ) to 0-based.
 fn parse_face_vertex(s: &str) -> (usize, Option<usize>, Option<usize>) {
 	let parts: Vec<&str> = s.split('/').collect();
 
@@ -140,6 +221,14 @@ fn parse_face_vertex(s: &str) -> (usize, Option<usize>, Option<usize>) {
 	(v, t, n)
 }
 
+/// Computes flat-shaded normals from triangle positions.
+///
+/// For each triangle, computes the face normal using the cross product
+/// of two edges. The same normal is assigned to all three vertices.
+///
+/// # Returns
+///
+/// A flat array of normals with the same length as positions.
 fn compute_normals(positions: &[f32]) -> Vec<f32> {
 	let mut normals = Vec::with_capacity(positions.len());
 

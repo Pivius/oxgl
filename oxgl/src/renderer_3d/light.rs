@@ -1,6 +1,15 @@
+//! Lighting System
+//!
+//! Provides light types and utilities for scene illumination.
+//!
+
 use glam::Vec3;
 use web_sys::{WebGlProgram, WebGl2RenderingContext as GL};
 
+/// Maximum number of lights supported per draw call.
+pub const MAX_LIGHTS: usize = 4;
+
+/// The type of a light source.
 #[derive(Clone, Debug)]
 pub enum LightType {
 	Directional,
@@ -8,6 +17,30 @@ pub enum LightType {
 	Spot { angle: f32, outer_angle: f32 },
 }
 
+/// A light source in the scene.
+///
+/// ## Examples
+///
+/// ```ignore
+/// // Point light
+/// let point = Light::point(
+///		Vec3::new(0.0, 5.0, 0.0),  // position
+///		Vec3::new(1.0, 1.0, 1.0),  // white color
+///		1.0,                       // intensity
+///		10.0,                      // radius
+/// );
+///
+/// // Directional light
+/// let sun = Light::directional(
+///		Vec3::new(-1.0, -1.0, 0.0), // direction
+///		Vec3::new(1.0, 0.95, 0.8),  // warm white
+///		0.8,                        // intensity
+/// );
+///
+/// // Light with shadows
+/// let shadow_light = Light::point(pos, color, intensity, radius)
+///		.with_shadows(true);
+/// ```
 #[derive(Clone, Debug)]
 pub struct Light {
 	pub light_type: LightType,
@@ -52,6 +85,7 @@ impl Light {
 		}
 	}
 
+	/// Returns the light type as an integer for shader use.
 	pub fn type_id(&self) -> i32 {
 		match self.light_type {
 			LightType::Directional => 0,
@@ -102,8 +136,10 @@ const LIGHT_UNIFORM_NAMES: [[&str; 6]; 4] = [
 	["lights[3].type", "lights[3].direction", "lights[3].position", "lights[3].color", "lights[3].intensity", "lights[3].radius"],
 ];
 
+/// Uploads light data to shader uniforms.
+///
+/// Supports up to [`MAX_LIGHTS`] lights per draw call.
 pub fn apply_lights(gl: &GL, program: &WebGlProgram, lights: &[Light]) {
-	const MAX_LIGHTS: usize = 4;
 
 	if let Some(loc) = gl.get_uniform_location(program, "numLights") {
 		gl.uniform1i(Some(&loc), lights.len().min(MAX_LIGHTS) as i32);

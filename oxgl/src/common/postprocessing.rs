@@ -1,39 +1,61 @@
+//! Post-Processing Effects
+//!
+//! Provides a stackable post-processing system with built-in effects like
+//! vignette, chromatic aberration, blur, and film grain.
+//!
+//! ## Architecture
+//!
+//! The system uses ping-pong framebuffers to chain multiple effects.
+//! Each effect renders to an intermediate texture which becomes the input for
+//! the next effect in the chain.
+//!
+//! ## Examples
+//!
+//! ```ignore
+//! use oxgl::renderer_3d::postprocessing::{PostProcessStack, presets};
+//!
+//! let mut pp = PostProcessStack::new(&gl, 800, 600)?;
+//!
+//! // Add effects (applied in order)
+//! pp.push(presets::vignette(&gl, 0.8, 0.4));
+//! pp.push(presets::chromatic_aberration(&gl, 5.0));
+//! pp.push(presets::film_grain(&gl, 0.05));
+//!
+//! // Toggle effects at runtime
+//! pp.get_mut(1).unwrap().enabled = false;
+//!
+//! // Modify uniforms at runtime
+//! pp.get_mut(0).unwrap().set_float("intensity", 1.2);
+//! ```
+//!
+
 use std::collections::HashMap;
 use web_sys::{
 	WebGlFramebuffer, WebGlTexture, WebGlRenderbuffer, WebGlBuffer, WebGlProgram,
 	WebGl2RenderingContext as GL,
 };
-use glam::{Vec2, Vec3, Vec4};
+use glam::{Vec2, Vec3};
+
+use super::Uniform;
 use crate::common::{compile_shader, link_program};
 
-#[derive(Clone, Debug)]
-pub enum PostProcessUniform {
-	Float(f32),
-	Vec2(Vec2),
-	Vec3(Vec3),
-	Vec4(Vec4),
-	Int(i32),
-}
-
-impl PostProcessUniform {
-	pub fn apply(&self, gl: &GL, location: &web_sys::WebGlUniformLocation) {
-		match self {
-			PostProcessUniform::Float(v) => gl.uniform1f(Some(location), *v),
-			PostProcessUniform::Vec2(v) => gl.uniform2fv_with_f32_array(Some(location), &v.to_array()),
-			PostProcessUniform::Vec3(v) => gl.uniform3fv_with_f32_array(Some(location), &v.to_array()),
-			PostProcessUniform::Vec4(v) => gl.uniform4fv_with_f32_array(Some(location), &v.to_array()),
-			PostProcessUniform::Int(v) => gl.uniform1i(Some(location), *v),
-		}
-	}
-}
-
+/// A single post-processing effect.
+///
+/// Combines a fragment shader with configurable uniforms
 pub struct PostProcessEffect {
 	program: WebGlProgram,
-	uniforms: HashMap<String, PostProcessUniform>,
+	uniforms: HashMap<String, Uniform>,
 	pub enabled: bool,
 }
 
 impl PostProcessEffect {
+	/// Creates a new effect from a fragment shader source.
+	///
+	/// Uses the built-in fullscreen quad vertex shader.
+	///
+	/// ## Errors
+	///
+	/// Returns an error if shader compilation fails.
 	pub fn new(gl: &GL, frag_src: &str) -> Result<Self, String> {
 		let vert_src = include_str!("../pp_shaders/postprocess.vert");
 		let vert_shader = compile_shader(gl, vert_src, GL::VERTEX_SHADER)?;
@@ -47,27 +69,28 @@ impl PostProcessEffect {
 		})
 	}
 
-	pub fn set(&mut self, name: &str, value: PostProcessUniform) -> &mut Self {
+	pub fn set(&mut self, name: &str, value: Uniform) -> &mut Self {
 		self.uniforms.insert(name.to_string(), value);
 		self
 	}
 
 	pub fn set_float(&mut self, name: &str, v: f32) -> &mut Self {
-		self.set(name, PostProcessUniform::Float(v))
+		self.set(name, Uniform::Float(v))
 	}
 
 	pub fn set_vec2(&mut self, name: &str, v: Vec2) -> &mut Self {
-		self.set(name, PostProcessUniform::Vec2(v))
+		self.set(name, Uniform::Vec2(v))
 	}
 
 	pub fn set_vec3(&mut self, name: &str, v: Vec3) -> &mut Self {
-		self.set(name, PostProcessUniform::Vec3(v))
+		self.set(name, Uniform::Vec3(v))
 	}
 
 	pub fn program(&self) -> &WebGlProgram {
 		&self.program
 	}
 
+	/// Uploads all uniforms to the GPU.
 	pub fn apply_uniforms(&self, gl: &GL) {
 		for (name, value) in &self.uniforms {
 			if let Some(loc) = gl.get_uniform_location(&self.program, name) {
@@ -77,10 +100,20 @@ impl PostProcessEffect {
 	}
 }
 
+/// Builder for creating post-processing effects with a fluent API.
+///
+/// ## Examples
+///
+/// ```ignore
+/// let effect = PostProcessEffectBuilder::new(&gl, my_frag_src)
+///		.float("strength", 0.5)
+///		.vec3("tint", Vec3::new(1.0, 0.9, 0.8))
+///		.build();
+/// ```
 pub struct PostProcessEffectBuilder<'a> {
 	gl: &'a GL,
 	frag_src: &'a str,
-	uniforms: HashMap<String, PostProcessUniform>,
+	uniforms: HashMap<String, Uniform>,
 }
 
 impl<'a> PostProcessEffectBuilder<'a> {
@@ -92,27 +125,32 @@ impl<'a> PostProcessEffectBuilder<'a> {
 		}
 	}
 
-	pub fn uniform(mut self, name: &str, value: PostProcessUniform) -> Self {
+	pub fn uniform(mut self, name: &str, value: Uniform) -> Self {
 		self.uniforms.insert(name.to_string(), value);
 		self
 	}
 
 	pub fn float(self, name: &str, v: f32) -> Self {
-		self.uniform(name, PostProcessUniform::Float(v))
+		self.uniform(name, Uniform::Float(v))
 	}
 
 	pub fn vec2(self, name: &str, v: Vec2) -> Self {
-		self.uniform(name, PostProcessUniform::Vec2(v))
+		self.uniform(name, Uniform::Vec2(v))
 	}
 
 	pub fn vec3(self, name: &str, v: Vec3) -> Self {
-		self.uniform(name, PostProcessUniform::Vec3(v))
+		self.uniform(name, Uniform::Vec3(v))
 	}
 
 	pub fn int(self, name: &str, v: i32) -> Self {
-		self.uniform(name, PostProcessUniform::Int(v))
+		self.uniform(name, Uniform::Int(v))
 	}
 
+	/// Builds the effect.
+	///
+	/// ## Panics
+	///
+	/// Panics if shader compilation fails.
 	pub fn build(self) -> PostProcessEffect {
 		let mut effect = PostProcessEffect::new(self.gl, self.frag_src)
 			.expect("Failed to compile post-process shader");
@@ -121,6 +159,7 @@ impl<'a> PostProcessEffectBuilder<'a> {
 	}
 }
 
+/// Ping-pong framebuffer for chaining effects.
 struct PingPongBuffer {
 	framebuffers: [WebGlFramebuffer; 2],
 	textures: [WebGlTexture; 2],
@@ -190,6 +229,22 @@ impl PingPongBuffer {
 	}
 }
 
+/// A stack of post-processing effects applied to the rendered scene.
+///
+/// Effects are applied in the order they are added.
+///
+/// ## Examples
+///
+/// ```ignore
+/// let mut pp = PostProcessStack::new(&gl, 800, 600)?;
+/// pp.push(presets::vignette(&gl, 0.8, 0.4));
+/// pp.push(presets::film_grain(&gl, 0.05));
+///
+/// // In render loop:
+/// pp.begin(&gl);
+/// // ... render scene ...
+/// pp.end(&gl, time);
+/// ```
 pub struct PostProcessStack {
 	scene_framebuffer: WebGlFramebuffer,
 	scene_texture: WebGlTexture,
@@ -203,6 +258,11 @@ pub struct PostProcessStack {
 }
 
 impl PostProcessStack {
+	/// Creates a new post-processing stack.
+	///
+	/// ## Errors
+	///
+	/// Returns an error if framebuffer creation fails.
 	pub fn new(gl: &GL, width: i32, height: i32) -> Result<Self, String> {
 		let scene_framebuffer = gl.create_framebuffer()
 			.ok_or("Failed to create scene framebuffer")?;
@@ -276,6 +336,7 @@ impl PostProcessStack {
 		})
 	}
 
+	/// Resizes the framebuffers.
 	pub fn resize(&mut self, gl: &GL, width: i32, height: i32) {
 		self.width = width;
 		self.height = height;
@@ -292,6 +353,7 @@ impl PostProcessStack {
 		self.ping_pong.resize(gl, width, height);
 	}
 
+	/// Adds an effect to the stack and returns its index.
 	pub fn push(&mut self, effect: PostProcessEffect) -> usize {
 		let index = self.effects.len();
 		self.effects.push(effect);
@@ -302,6 +364,7 @@ impl PostProcessStack {
 		self.effects.get_mut(index)
 	}
 
+	/// Removes an effect by index.
 	pub fn remove(&mut self, index: usize) -> Option<PostProcessEffect> {
 		if index < self.effects.len() {
 			Some(self.effects.remove(index))
@@ -314,6 +377,10 @@ impl PostProcessStack {
 		self.effects.clear();
 	}
 
+	
+	/// Begins scene rendering to the post-process framebuffer.
+	///
+	/// Call this before rendering your scene.
 	pub fn begin(&self, gl: &GL) {
 		if !self.enabled {
 			return;
@@ -324,6 +391,9 @@ impl PostProcessStack {
 		gl.clear(GL::COLOR_BUFFER_BIT | GL::DEPTH_BUFFER_BIT);
 	}
 
+	/// Ends scene rendering and applies all effects.
+	///
+	/// Call this after rendering your scene.
 	pub fn end(&mut self, gl: &GL, time: f32) {
 		if !self.enabled {
 			return;
