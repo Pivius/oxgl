@@ -5,7 +5,7 @@ use glam::{Quat, Vec3};
 use oxgl::{
 	App, core::Transform3D, 
 	common::{material::presets, Mesh, PostProcessStack, postprocessing::presets as pp_presets}, 
-	renderer_3d::{Light, Primitive},
+	renderer_3d::{Light, Primitive, CSS3DRenderer},
 };
 
 fn main() {
@@ -96,6 +96,18 @@ fn Canvas() -> impl IntoView {
 			Transform3D::new().with_position(Vec3::new(0.0, 0.0, 0.0)).with_scale(Vec3::splat(0.5))
 		);
 
+		let css_renderer = CSS3DRenderer::new(
+			"webgl-canvas",
+			CANVAS_WIDTH as u32,
+			CANVAS_HEIGHT as u32,
+			60.0
+		).unwrap();
+
+		let label_id = css_renderer.add_billboard(
+			"<div style='background: rgba(0,0,0,0.7); color: white; padding: 8px; border-radius: 4px;'>Light</div>",
+			Vec3::new(0.0, 1.5, 0.0)
+		).unwrap();
+
 		app.run(move |scene, time| {
 			if let Some(obj) = scene.get_mut(cube) {
 				obj.transform.rotation = Quat::from_rotation_y(time);
@@ -103,11 +115,18 @@ fn Canvas() -> impl IntoView {
 
 			if let Some(light) = scene.get_light_mut(point_light_id) {
 				light.position = Vec3::new(time.cos() * 3.0, 1.0, time.sin() * 3.0);
+				css_renderer.with_element_mut(label_id, |obj| {
+					obj.transform.position = light.position + Vec3::new(0.0, -1.5, 0.0);
+				});
 			}
+
+			css_renderer.render(&scene.camera);
 		});
 	});
 
 	view! {
-		<canvas node_ref=canvas_ref class=style::gl_canvas id="webgl-canvas" width=CANVAS_WIDTH height=CANVAS_HEIGHT></canvas>
+		<div class=style::canvas_wrapper>
+			<canvas node_ref=canvas_ref id="webgl-canvas" width=CANVAS_WIDTH height=CANVAS_HEIGHT></canvas>
+		</div>
 	}
 }

@@ -15,10 +15,15 @@ body {
 	width: 100vw;
 }
 
-.gl-canvas {
+.canvas-wrapper {
+	position: relative;
 	background: #222;
-	display: block;
 	border-radius: 8px;
 	box-shadow: 0 2px 16px rgba(0,0,0,0.4);
 	transition: box-shadow 0.2s ease;
+	overflow: hidden;
+}
+
+.canvas-wrapper canvas {
+	display: block;
 }
