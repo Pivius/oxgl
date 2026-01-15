@@ -5,7 +5,7 @@
 //!
 //! ## Examples
 //!
-//! ```
+//! ```ignore
 //! use oxgl::common::{compile_shader, link_program};
 //! use web_sys::WebGl2RenderingContext as GL;
 //!

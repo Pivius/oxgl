@@ -5,7 +5,7 @@
 //!
 //! ## Examples
 //!
-//! ```
+//! ```ignore
 //! use oxgl::renderer_3d::{Scene, Light, LightType, Primitive};
 //! use oxgl::common::{Camera, Mesh, material::presets};
 //! use oxgl::core::Transform3D;

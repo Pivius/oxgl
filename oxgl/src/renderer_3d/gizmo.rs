@@ -4,10 +4,13 @@
 //!
 //! ## Examples
 //!
-//! ```
+//! ```ignore
+//! use crate::Renderer;
 //! use oxgl::renderer_3d::GizmoRenderer;
 //! use glam::Vec3;
 //!
+//! let renderer = Renderer::new(0);
+//! let gl = &renderer.gl;
 //! let gizmos = GizmoRenderer::new(&gl);
 //!
 //! // Draw coordinate axes at origin

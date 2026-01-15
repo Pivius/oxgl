@@ -12,6 +12,9 @@ js-sys = "0.3.83"
 log = "0.4.29"
 slotmap = "1.1.1"
 web-sys = { version = "0.3.83", features = [
+	"HtmlCanvasElement",
+	"Window",
+	"Document",
 	"WebGl2RenderingContext",
 	"WebGlUniformLocation",
 	"WebGlBuffer",

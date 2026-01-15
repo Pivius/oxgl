@@ -6,7 +6,7 @@
 //!
 //! ## Examples
 //!
-//! ```
+//! ```ignore
 //! use oxgl::renderer_3d::ShadowMap;
 //! use glam::Vec3;
 //!

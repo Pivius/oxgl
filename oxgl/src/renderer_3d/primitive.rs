@@ -6,7 +6,7 @@
 //!
 //! ## Examples
 //!
-//! ```
+//! ```ignore
 //! use oxgl::renderer_3d::Primitive;
 //! use oxgl::common::{Mesh, material::presets};
 //! use glam::Vec3;

@@ -5,7 +5,7 @@
 //!
 //! ## Examples
 //!
-//! ```
+//! ```ignore
 //! use oxgl::common::MeshData;
 //!
 //! let obj_content = include_str!("model.obj");

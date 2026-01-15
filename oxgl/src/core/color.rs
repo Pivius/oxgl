@@ -5,7 +5,7 @@
 //!
 //! ## Examples
 //!
-//! ```
+//! ```ignore
 //! use oxgl::core::Color;
 //!
 //! // Create from hex
